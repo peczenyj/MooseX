@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX)
+
 # MooseX
 
 A postmodern object system for Ruby
