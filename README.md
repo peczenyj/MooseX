@@ -1,8 +1,6 @@
-[![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX)
-
 # MooseX
 
-A postmodern object system for Ruby
+A postmodern object system for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX)
 
 ```ruby
     require 'moosex'
