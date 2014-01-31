@@ -3,6 +3,8 @@
 A postmodern object system for Ruby
 
 ```ruby
+    require 'moosex'
+    
     class Point
     	include MooseX
 	
