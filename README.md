@@ -32,7 +32,7 @@ A postmodern object system for Ruby [![Build Status](https://travis-ci.org/pecze
         has :bar, {  
             :is => :rwp,      # read-write-private (private setter)
             :isa => Integer, 
-            :required => true # you should require in the constructor 
+            :required => true, # you should require in the constructor 
         }
     end
 
@@ -62,8 +62,8 @@ A postmodern object system for Ruby [![Build Status](https://travis-ci.org/pecze
         has :c => {         # alternative syntax to be 
             :is => :ro,     # more similar to Moo/Moose    
             :default => 1,
-            :predicate => :can_haz_c?     # custom predicate
-            :clearer => "desintegrate_c"  # force coerce to symbol
+            :predicate => :can_haz_c?,     # custom predicate
+            :clearer => "desintegrate_c",  # force coerce to symbol
         }
     end    
 
