@@ -104,29 +104,29 @@ module MooseX
 				!!required 
 			end,
 			:predicate => lambda do |predicate, field_name| 
-				begin
-					if ! predicate
-						return false
-					elsif predicate.is_a? TrueClass
-						return "has_#{field_name}?".to_sym,
-					end
+				if ! predicate
+					return false
+				elsif predicate.is_a? TrueClass
+					return "has_#{field_name}?".to_sym
+				end
 
-					return predicate.to_sym
-				rescue e
+				begin
+					predicate.to_sym
+				rescue => e
 					# create a nested exception here
 					raise "cannot coerce field predicate to a symbol for #{field_name}: #{e}"
 				end
 			end,
-			:clearer => lambda do |clearer, field_name| 
+			:clearer => lambda do|clearer, field_name| 
+				if ! clearer
+					return false
+				elsif clearer.is_a? TrueClass
+					return "reset_#{field_name}!".to_sym
+				end
+		
 				begin
-					if ! clearer
-						return false
-					elsif clearer.is_a? TrueClass
-						return "reset_#{field_name}!".to_sym,
-					end
-
-					return clearer.to_sym
-				rescue e
+					clearer.to_sym
+				rescue => e
 					# create a nested exception here
 					raise "cannot coerce field clearer to a symbol for #{field_name}: #{e}"
 				end
