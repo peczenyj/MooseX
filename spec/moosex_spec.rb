@@ -40,6 +40,10 @@ class Baz
 		:isa => lambda {|bam| raise 'bam should be less than 100' if bam > 100},
 		:required => true
 	}
+	has :boom, {
+		:is => :rw,
+		:predicate => true,
+	}
 end
 
 class Lol 
@@ -56,7 +60,7 @@ class Lol
 	}
 
 	has [:d, :e] => {
-		:is => :ro,
+		:is => "ro",
 		:default => 2,		
 	}	
 end
@@ -93,13 +97,13 @@ describe "Point" do
 			p = Point.new
 			expect { 
 				p.x = "lol" 
-			}.to raise_error('isa check for "x" failed: lol is not Integer!')
+			}.to raise_error('isa check for "x" failed: is not instance of Integer!')
 		end	
 		
 		it "for x, with type check" do			
 			expect { 
 				Point.new(:x => "lol") 
-			}.to raise_error('isa check for "x" failed: lol is not Integer!')
+			}.to raise_error('isa check for "x" failed: is not instance of Integer!')
 		end	
 
 		it "clear should clean attributes" do
@@ -148,6 +152,16 @@ describe "Baz" do
 		expect {
 			Baz.new( :bam => 199 )
 		}.to raise_error(/bam should be less than 100/)
+	end
+
+	it "rw acessor should has nil value" do
+		baz = Baz.new( :bam => 99 )
+		
+		baz.has_boom?.should be_false
+		baz.boom.should be_nil
+		baz.boom= 0
+		baz.has_boom?.should be_true
+		baz.boom.should be_zero
 	end
 end
 

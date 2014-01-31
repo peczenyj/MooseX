@@ -42,20 +42,18 @@ module MooseX
 
 				g = attr.generate_getter
 				
-	    		define_method attr_name, &g
+	    		define_method attr.attr_symbol, &g
 	 
 	 			s = attr.generate_setter
 	 		
-	 			if attr_options[:is].eql? :rw 
+	 			case attr.is 
+	 			when :rw 				
+					define_method "#{attr.attr_symbol}=", &s
 				
-					define_method "#{attr_name}=", &s
-				
-				elsif attr_options[:is].eql? :rwp
-
-					define_method "#{attr_name}=", &s
+				when :rwp
+					define_method "#{attr.attr_symbol}=", &s
 					
-					private "#{attr_name}="
-
+					private "#{attr.attr_symbol}="
 				end
 
 				__meta.add(attr)
@@ -65,28 +63,115 @@ module MooseX
 	
 	class Attribute
 
+		attr_reader :attr_symbol, :is, :isa, :default, :required
+
+		DEFAULTS= { 
+			:required => false, 
+			:predicate => false,
+			:isa => lambda { |x| true },
+		}
+
+		REQUIRED = [ :is ]
+
+		VALIDATE = {
+			:is => lambda do |is, field_name| 
+				unless [:rw, :rwp, :ro, :lazy].include?(is)
+					raise "invalid value for field '#{field_name}' is '#{is}', must be one of :rw, :rwp, :ro or :lazy"  
+				end
+			end,
+		};
+
+		COERCE = {
+			:is  => lambda do |is, field_name| 
+				is.to_sym 
+			end,
+			:isa => lambda do |isa, field_name| 
+				return isa if isa.is_a? Proc
+				
+				return lambda do |new_value| 
+					unless new_value.is_a?(isa)
+						raise "isa check for \"#{field_name}\" failed: is not instance of #{isa}!" 
+					end 
+				end	 
+			end,
+			:default => lambda do |default, field_name|
+				return default if default.is_a? Proc
+
+				return lambda { default }		
+			end,
+			:required => lambda do |required, field_name| 
+				!!required 
+			end,
+			:predicate => lambda do |predicate, field_name| 
+				begin
+					if ! predicate
+						return false
+					elsif predicate.is_a? TrueClass
+						return "has_#{field_name}?".to_sym,
+					end
+
+					return predicate.to_sym
+				rescue e
+					# create a nested exception here
+					raise "cannot coerce field predicate to a symbol for #{field_name}: #{e}"
+				end
+			end				
+		};
+
 		def initialize(a, o)
+			# todo extract this to a framework, see issue #21 on facebook
+			o = DEFAULTS.merge(o)
+
+			REQUIRED.each { |field| 
+				unless o.has_key?(field)
+					raise "field #{field} is required for Attribute #{a}" 
+				end
+			}
+			COERCE.each_pair do |field, coerce|
+				if o.has_key? field
+					o[field] = coerce.call(o[field], a)
+				end
+			end
+			VALIDATE.each_pair do |field, validate|
+				return if ! o.has_key? field
+
+				validate.call(o[field], a)
+			end	
+
 			@attr_symbol = a
-			@options     = o
+			@is          = o[:is]
+			@isa         = o[:isa]
+			@default     = o[:default]
+			@required    = o[:required] 
+			@predicate   = o[:predicate]
 		end
 		
 		def init(object, args)
+			inst_variable_name = "@#{@attr_symbol}".to_sym
+			
 			setter = @attr_symbol.to_s.concat("=").to_sym
 			value  = nil
+
+			if @predicate
+				object.define_singleton_method @predicate do
+						instance_variable_defined? inst_variable_name
+				end
+			end
  
 			if args.has_key? @attr_symbol
 				value = args[ @attr_symbol ]
-			elsif @options[:required]
+			elsif @required
 				raise "attr \"#{@attr_symbol}\" is required"
+			elsif @default
+				value = @default.call
 			else
-				value = (@options[:default].is_a? Proc) ? @options[:default].call : @options[:default]
+				return
 			end
  
- 			if @options[:is].eql? :ro
+ 			if @is.eql? :ro
 
  				# TODO: remove redundancy
 
-				inst_variable_name = "@#{@attr_symbol}".to_sym
 				type_check = generate_type_check
 				type_check.call(value)
 				object.instance_variable_set inst_variable_name, value
@@ -113,17 +198,8 @@ module MooseX
 		end
 		
 		def generate_type_check
-			if @options.has_key? :isa
-				isa = @options[:isa]
 
-				return isa if isa.is_a? Proc
-
-				return lambda do |new_value|
-					raise "isa check for \"#{@attr_symbol}\" failed: lol is not #{isa}!" unless new_value.is_a? isa
-				end	 
-			end
- 
-			lambda { |new_value| }
+			return @isa
 		end			
 	end
 	
