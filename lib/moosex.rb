@@ -12,14 +12,9 @@ module MooseX
 		o.extend(MooseX::Core)
 			
 		o.class_exec do 
-			meta = MooseX::Meta.new()
-		
-			#class_variable_set "@@meta".to_sym, meta
+			meta = MooseX::Meta.new
 
-			define_singleton_method :__meta do
-				meta
-				# class_variable_get "@@meta".to_sym
-			end
+			define_singleton_method(:__meta) { meta }
 		end
 
 		def initialize(args={})
