@@ -9,22 +9,52 @@ A postmodern object system for Ruby
     	include MooseX
 	
     	has :x , {
-    		:is => :rw,
-    		:isa => Integer,
-    		:default => 0,
+    		:is => :rw,      # read-write 
+    		:isa => Integer, # should be Integer
+    		:default => 0,   # default value is 0 (constant)
     	}
 
     	has :y , {
     		:is => :rw,
     		:isa => Integer,
-    		:default => lambda { 0 },
+    		:default => lambda { 0 }, # you should specify a lambda
     	}
 	
     	def clear 
-    		self.x= 0
-    		self.y= 0
+    		self.x= 0        # to run with type-check you must
+    		self.y= 0        # use the setter instad @x=
     	end
     end
+
+    class Foo
+        include MooseX
+
+        has :bar, {  
+            :is => :rwp,      # read-write-private (private setter)
+            :isa => Integer, 
+            :required => true # you should require in the constructor 
+        }
+    end
+
+    class Baz
+        include MooseX
+
+        has :bam, {
+            :is => :ro,
+            :isa => lambda {|x| # you should add your own validator
+                raise 'x should be less than 100' if x > 100
+            },
+            :required => true
+        }
+
+    end
+
+    # now you have a generic constructor
+    p1  = Point.new                       # x and y will be 0
+    p2  = Point.new( :x => 5 )            # y will be 0
+    p3  = Point.new( :x => 5, :y => 4)
+    foo = Foo.new( :bar => 123 )          # without bar will raise exception
+    baz = Baz.new( :bam => 99 )           # if bam > 100 will raise exception
 ```
     
 ## Installation

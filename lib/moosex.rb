@@ -11,11 +11,15 @@ module MooseX
 			
 		o.extend(MooseX::Core)
 			
-		o.class_exec { 
-			@@meta = MooseX::Meta.new()
-		}
-		o.define_singleton_method :__meta do
-			class_variable_get "@@meta".to_sym
+		o.class_exec do 
+			meta = MooseX::Meta.new()
+		
+			#class_variable_set "@@meta".to_sym, meta
+
+			define_singleton_method :__meta do
+				meta
+				# class_variable_get "@@meta".to_sym
+			end
 		end
 
 		def initialize(args={})
@@ -30,14 +34,25 @@ module MooseX
 	
 		def has(attr_name, attr_options)
 			attr = MooseX::Attribute.new(attr_name, attr_options)
+
 			g = attr.generate_getter
 			
-    	define_method attr_name, &g
+    		define_method attr_name, &g
  
-			s = attr.generate_setter
- 
-			define_method "#{attr_name}=", &s
+ 			s = attr.generate_setter
+ 		
+ 			if attr_options[:is].eql? :rw 
 			
+				define_method "#{attr_name}=", &s
+			
+			elsif attr_options[:is].eql? :rwp
+
+				define_method "#{attr_name}=", &s
+				
+				private "#{attr_name}="
+
+			end
+
 			__meta.add(attr)
 		end
 		
@@ -57,12 +72,25 @@ module MooseX
 			if args.has_key? @attr_symbol
 				value = args[ @attr_symbol ]
 			elsif @options[:required]
-				raise "ops, attr #{@attr_symbol} is required"
+				raise "attr \"#{@attr_symbol}\" is required"
 			else
 				value = (@options[:default].is_a? Proc) ? @options[:default].call : @options[:default]
 			end
  
-			object.send( setter, value )
+ 			if @options[:is].eql? :ro
+
+ 				# TODO: remove redundancy
+
+				inst_variable_name = "@#{@attr_symbol}".to_sym
+				type_check = generate_type_check
+				type_check.call(value)
+				object.instance_variable_set inst_variable_name, value
+			
+			else
+
+				object.send( setter, value )
+				
+			end	
 		end
 		
 		def generate_getter
@@ -81,9 +109,12 @@ module MooseX
 		
 		def generate_type_check
 			if @options.has_key? :isa
-				klass = @options[:isa]
+				isa = @options[:isa]
+
+				return isa if isa.is_a? Proc
+
 				return lambda do |new_value|
-					raise "isa check for \"#{@attr_symbol}\" failed: lol is not #{klass}!" unless new_value.is_a? klass
+					raise "isa check for \"#{@attr_symbol}\" failed: lol is not #{isa}!" unless new_value.is_a? isa
 				end	 
 			end
  

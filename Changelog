@@ -1,0 +1,9 @@
+0.0.2 - 2014-01-31
+	- fix one important bug, not it is possible use in more than one class
+	- add require option
+	- supports :ro, :rw, :rwp ( read-only, read-write and read-write-private) options
+	- supports default value as lambda or constant
+	- supports isa as class/module name or lambda
+
+0.0.1 - 2014-01-31
+	- first release
