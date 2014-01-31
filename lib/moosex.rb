@@ -63,32 +63,31 @@ module MooseX
 	
 	class Attribute
 
-		attr_reader :attr_symbol, :is, :isa, :default, :required
-
+		attr_reader :attr_symbol, :is 
 		DEFAULTS= { 
-			:clearer => false,
-			:required => false, 
-			:predicate => false,
-			:isa => lambda { |x| true },
-			:handles => {},
+			clearer: false,
+			required: false, 
+			predicate: false,
+			isa: lambda { |x| true },
+			handles: {},
 		}
 
 		REQUIRED = [ :is ]
 
 		VALIDATE = {
-			:is => lambda do |is, field_name| 
+			is: lambda do |is, field_name| 
 				unless [:rw, :rwp, :ro, :lazy].include?(is)
 					raise "invalid value for field '#{field_name}' is '#{is}', must be one of :rw, :rwp, :ro or :lazy"  
 				end
 			end,
-			:handles => lambda {|handles, field_name| true }, # TODO: add implementation
+			handles: lambda {|handles, field_name| true }, # TODO: add implementation
 		};
 
 		COERCE = {
-			:is  => lambda do |is, field_name| 
+			is: lambda do |is, field_name| 
 				is.to_sym 
 			end,
-			:isa => lambda do |isa, field_name| 
+			isa: lambda do |isa, field_name| 
 				return isa if isa.is_a? Proc
 				
 				return lambda do |new_value| 
@@ -97,15 +96,15 @@ module MooseX
 					end 
 				end	 
 			end,
-			:default => lambda do |default, field_name|
+			default: lambda do |default, field_name|
 				return default if default.is_a? Proc
 
 				return lambda { default }		
 			end,
-			:required => lambda do |required, field_name| 
+			required: lambda do |required, field_name| 
 				!!required 
 			end,
-			:predicate => lambda do |predicate, field_name| 
+			predicate: lambda do |predicate, field_name| 
 				if ! predicate
 					return false
 				elsif predicate.is_a? TrueClass
@@ -119,7 +118,7 @@ module MooseX
 					raise "cannot coerce field predicate to a symbol for #{field_name}: #{e}"
 				end
 			end,
-			:clearer => lambda do|clearer, field_name| 
+			clearer: lambda do|clearer, field_name| 
 				if ! clearer
 					return false
 				elsif clearer.is_a? TrueClass
@@ -133,7 +132,7 @@ module MooseX
 					raise "cannot coerce field clearer to a symbol for #{field_name}: #{e}"
 				end
 			end,
-			:handles => lambda do |handles, field_name|
+			handles: lambda do |handles, field_name|
 				# TODO:
 				# if single method
 				# if array of methods

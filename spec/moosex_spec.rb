@@ -4,16 +4,16 @@ require 'moosex'
 class Point
 	include MooseX
 	
-	has :x , {
-		:is => :rw,
-		:isa => Integer,
-		:default => 0,
+	has x: {
+		is: :rw,
+		isa: Integer,
+		default: 0,
 	}
 
-	has :y , {
-		:is => :rw,
-		:isa => Integer,
-		:default => lambda { 0 },
+	has y: {
+		is: :rw,
+		isa: Integer,
+		default: lambda { 0 },
 	}
 	
 	def clear 
@@ -25,25 +25,25 @@ end
 class Foo
 	include MooseX
 
-	has :bar, {
-		:is => :rwp,
-		:isa => Integer,
-		:required => true
+	has bar: {
+		is: :rwp,
+		isa: Integer,
+		required: true
 	}
 end
 
 class Baz
 	include MooseX
 
-	has :bam, {
-		:is => :ro,
-		:isa => lambda {|bam| raise 'bam should be less than 100' if bam > 100},
-		:required => true
+	has bam: {
+		is: :ro,
+		isa: lambda {|bam| raise 'bam should be less than 100' if bam > 100},
+		required: true
 	}
-	has :boom, {
-		:is => :rw,
-		:predicate => true,
-		:clearer => true,
+	has boom: {
+		is: :rw,
+		predicate: true,
+		clearer: true,
 	}
 end
 
@@ -51,20 +51,20 @@ class Lol
 	include MooseX
 
 	has [:a, :b], {
-		:is => :ro,
-		:default => 0,		
+		is: :ro,
+		default: 0,		
 	}
 
-	has :c => {
-		:is => :ro,
-		:default => 1,
-		:predicate => :has_option_c?,
-		:clearer => "reset_option_c", # force coerce
+	has c: {
+		is:  :ro,
+		default:  1,
+		predicate:  :has_option_c?,
+		clearer:  "reset_option_c", # force coerce
 	}
 
 	has [:d, :e] => {
-		:is => "ro",
-		:default => 2,		
+		is: "ro",
+		default: 2,		
 	}	
 end
 
@@ -81,13 +81,13 @@ end
 class Proxy
 	include MooseX
 
-	has :target, {
-		:is => :ro,
-		:isa => Target,
-		:default => lambda { Target.new() },
-		:handles => {
-			:my_method_x => :method_x,
-			:my_method_y => :method_y,	
+	has target: {
+		is:  :ro,
+		isa:  Target,
+		default: lambda { Target.new() },
+		handles: {
+			my_method_x: :method_x,
+			my_method_y: :method_y,	
 		},
 	}
 end
@@ -117,13 +117,13 @@ describe "Point" do
 		end
 	
 		it "should initialize only y" do
-			p = Point.new( :x => 5 )
+			p = Point.new( x: 5 )
 			p.x.should == 5
 			p.y.should be_zero
 		end
 	
 		it "should initialize x and y" do
-			p = Point.new( :x => 5, :y => 4)
+			p = Point.new( x: 5, y: 4)
 			p.x.should == 5
 			p.y.should == 4
 		end
@@ -145,12 +145,12 @@ describe "Point" do
 		
 		it "for x, with type check" do			
 			expect { 
-				Point.new(:x => "lol") 
+				Point.new(x: "lol") 
 			}.to raise_error('isa check for "x" failed: is not instance of Integer!')
 		end	
 
 		it "clear should clean attributes" do
-			p = Point.new( :x => 5, :y => 4)
+			p = Point.new( x: 5, y: 4)
 			p.clear
 			p.x.should be_zero
 			p.y.should be_zero			
@@ -166,12 +166,12 @@ describe "Foo" do
 	end
 
 	it "should require bar if necessary" do 
-		foo = Foo.new( :bar => 123 )
+		foo = Foo.new( bar: 123 )
 		foo.bar.should == 123
 	end
 
 	it "should not be possible update bar (setter private)" do 
-		foo = Foo.new( :bar => 123 )
+		foo = Foo.new( bar: 123 )
 		expect {
 			foo.bar = 1024
 		}.to raise_error(NoMethodError)
@@ -180,12 +180,12 @@ end
 
 describe "Baz" do
 	it "should require bam if necessary" do 
-		baz = Baz.new( :bam => 99 )
+		baz = Baz.new( bam: 99 )
 		baz.bam.should == 99
 	end
 
 	it "should not be possible update baz (read only)" do 
-		baz = Baz.new( :bam => 99 )
+		baz = Baz.new( bam: 99 )
 		expect {
 			baz.bam = 1024
 		}.to raise_error(NoMethodError)
@@ -193,12 +193,12 @@ describe "Baz" do
 
 	it "should run the lambda isa" do 
 		expect {
-			Baz.new( :bam => 199 )
+			Baz.new( bam: 199 )
 		}.to raise_error(/bam should be less than 100/)
 	end
 
 	it "rw acessor should has nil value, supports predicate" do
-		baz = Baz.new( :bam => 99 )
+		baz = Baz.new( bam: 99 )
 		
 		baz.has_boom?.should be_false
 		baz.boom.should be_nil
@@ -208,7 +208,7 @@ describe "Baz" do
 	end
 
 	it "rw acessor should has nil value, supports clearer" do
-		baz = Baz.new( :bam => 99, :boom => 0 )
+		baz = Baz.new( bam: 99, boom: 0 )
 		
 		baz.has_boom?.should be_true
 		baz.boom.should be_zero
@@ -220,7 +220,7 @@ describe "Baz" do
 	end	
 
 	it "should be possible call the clearer twice" do
-		baz = Baz.new( :bam => 99, :boom => 0 )
+		baz = Baz.new( bam: 99, boom: 0 )
 		
 		baz.reset_boom!
 		baz.reset_boom!
@@ -232,7 +232,7 @@ end
 
 describe "Lol" do
 	it "Lol should has five arguments" do
-		lol = Lol.new(:a => 5, :d => -1)
+		lol = Lol.new(a: 5, d: -1)
 		lol.a.should == 5
 		lol.b.should be_zero
 		lol.c.should == 1
@@ -241,7 +241,7 @@ describe "Lol" do
 	end
 
 	it "Lol should support custom predicate and clearer" do
-		lol = Lol.new(:a => 5, :d => -1)
+		lol = Lol.new(a: 5, d: -1)
 
 		lol.has_option_c?.should be_true
 		lol.reset_option_c
