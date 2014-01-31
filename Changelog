@@ -1,6 +1,8 @@
+0.0.3 - 2014-01-31
 	- add support to clearer #26
 	- add support to predicate #11
 	- add support to handle more than one attribute #2
+	- small improvements
 
 0.0.2 - 2014-01-31
 	- fix one important bug, not it is possible use in more than one class
