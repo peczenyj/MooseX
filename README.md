@@ -1,6 +1,25 @@
 # Moosex
 
-TODO: Write a gem description
+    class Point
+    	include MooseX
+	
+    	has :x , {
+    		:is => :rw,
+    		:isa => Integer,
+    		:default => 0,
+    	}
+
+    	has :y , {
+    		:is => :rw,
+    		:isa => Integer,
+    		:default => lambda { 0 },
+    	}
+	
+    	def clear 
+    		self.x= 0
+    		self.y= 0
+    	end
+    end
 
 ## Installation
 
