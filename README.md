@@ -1,4 +1,4 @@
-# Moosex
+# MooseX
 
 A postmodern object system for Ruby
 
