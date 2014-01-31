@@ -70,6 +70,7 @@ module MooseX
 			:required => false, 
 			:predicate => false,
 			:isa => lambda { |x| true },
+			:handles => {},
 		}
 
 		REQUIRED = [ :is ]
@@ -80,6 +81,7 @@ module MooseX
 					raise "invalid value for field '#{field_name}' is '#{is}', must be one of :rw, :rwp, :ro or :lazy"  
 				end
 			end,
+			:handles => lambda {|handles, field_name| true }, # TODO: add implementation
 		};
 
 		COERCE = {
@@ -130,6 +132,12 @@ module MooseX
 					# create a nested exception here
 					raise "cannot coerce field clearer to a symbol for #{field_name}: #{e}"
 				end
+			end,
+			:handles => lambda do |handles, field_name|
+				# TODO:
+				# if single method
+				# if array of methods
+				handles
 			end,			
 		};
 
@@ -160,6 +168,7 @@ module MooseX
 			@required    = o[:required] 
 			@predicate   = o[:predicate]
 			@clearer     = o[:clearer]
+			@handles     = o[:handles]
 		end
 		
 		def init(object, args)
@@ -167,6 +176,13 @@ module MooseX
 			
 			setter = @attr_symbol.to_s.concat("=").to_sym
 			value  = nil
+
+			attr_symbol = @attr_symbol
+			@handles.each_pair do | method, target_method |
+				object.define_singleton_method method do |*args|
+					self.send(attr_symbol).send(target_method, *args)
+				end
+			end
 
 			if @predicate
 				object.define_singleton_method @predicate do

@@ -68,6 +68,46 @@ class Lol
 	}	
 end
 
+class Target 
+	def method_x
+		1024
+	end
+
+	def method_y(a,b,c)
+		a + b + c
+	end
+end
+
+class Proxy
+	include MooseX
+
+	has :target, {
+		:is => :ro,
+		:isa => Target,
+		:default => lambda { Target.new() },
+		:handles => {
+			:my_method_x => :method_x,
+			:my_method_y => :method_y,	
+		},
+	}
+end
+
+describe "Proxy" do
+	it "should delegate method_x to the target" do
+		p = Proxy.new
+
+		p.target.method_x.should == 1024
+		p.my_method_x.should == 1024
+	end
+
+	it "should delegate method_y to the target" do
+		p = Proxy.new
+
+		p.target.method_y(1,2,3).should == 6
+		p.my_method_y(1,2,3).should == 6
+	end	
+end
+
 describe "Point" do
 	describe "should has an intelligent constructor" do
 		it "without arguments, should initialize with default values" do

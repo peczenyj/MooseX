@@ -67,12 +67,31 @@ A postmodern object system for Ruby [![Build Status](https://travis-ci.org/pecze
         }
     end    
 
+    class Target 
+        def method_x
+            1024
+        end
+    end
+
+    class Proxy
+        include MooseX
+
+        has :target, {
+            :is => :ro,
+            :default => lambda { Target.new() },
+            :handles => {
+                :my_method_x => :method_x,# create my_method_x in Proxy
+            },                            # this will delegate to @target.method_x
+        }
+    end
+
     # now you have a generic constructor
     p1  = Point.new                       # x and y will be 0
     p2  = Point.new( :x => 5 )            # y will be 0
     p3  = Point.new( :x => 5, :y => 4)
     foo = Foo.new( :bar => 123 )          # without bar will raise exception
     baz = Baz.new( :bam => 99 )           # if bam > 100 will raise exception
+    Proxy.new.my_method_x                 # will call method_x in target, return 1024
 ```
     
 ## Installation
