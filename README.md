@@ -2,6 +2,7 @@
 
 A postmodern object system for Ruby
 
+```ruby
     class Point
     	include MooseX
 	
@@ -22,6 +23,7 @@ A postmodern object system for Ruby
     		self.y= 0
     	end
     end
+```
     
 ## Installation
 
