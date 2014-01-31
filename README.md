@@ -40,7 +40,7 @@ A postmodern object system for Ruby [![Build Status](https://travis-ci.org/pecze
         include MooseX
 
         has :bam, {
-            :is => :ro,
+            :is => :ro,         # read-only, you should specify in new only
             :isa => lambda {|x| # you should add your own validator
                 raise 'x should be less than 100' if x > 100
             },
