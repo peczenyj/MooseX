@@ -66,6 +66,7 @@ module MooseX
 		attr_reader :attr_symbol, :is, :isa, :default, :required
 
 		DEFAULTS= { 
+			:clearer => false,
 			:required => false, 
 			:predicate => false,
 			:isa => lambda { |x| true },
@@ -115,7 +116,21 @@ module MooseX
 					# create a nested exception here
 					raise "cannot coerce field predicate to a symbol for #{field_name}: #{e}"
 				end
-			end				
+			end,
+			:clearer => lambda do |clearer, field_name| 
+				begin
+					if ! clearer
+						return false
+					elsif clearer.is_a? TrueClass
+						return "reset_#{field_name}!".to_sym,
+					end
+
+					return clearer.to_sym
+				rescue e
+					# create a nested exception here
+					raise "cannot coerce field clearer to a symbol for #{field_name}: #{e}"
+				end
+			end,			
 		};
 
 		def initialize(a, o)
@@ -144,6 +159,7 @@ module MooseX
 			@default     = o[:default]
 			@required    = o[:required] 
 			@predicate   = o[:predicate]
+			@clearer     = o[:clearer]
 		end
 		
 		def init(object, args)
@@ -154,10 +170,18 @@ module MooseX
 
 			if @predicate
 				object.define_singleton_method @predicate do
-						instance_variable_defined? inst_variable_name
+					instance_variable_defined? inst_variable_name
 				end
 			end
- 
+
+			if @clearer
+				object.define_singleton_method @clearer do
+					if instance_variable_defined? inst_variable_name
+						remove_instance_variable inst_variable_name
+					end
+				end
+			end
+
 			if args.has_key? @attr_symbol
 				value = args[ @attr_symbol ]
 			elsif @required

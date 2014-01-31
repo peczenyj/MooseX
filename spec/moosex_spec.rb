@@ -43,6 +43,7 @@ class Baz
 	has :boom, {
 		:is => :rw,
 		:predicate => true,
+		:clearer => true,
 	}
 end
 
@@ -56,7 +57,9 @@ class Lol
 
 	has :c => {
 		:is => :ro,
-		:default => 1,		
+		:default => 1,
+		:predicate => :has_option_c?,
+		:clearer => "reset_option_c", # force coerce
 	}
 
 	has [:d, :e] => {
@@ -154,7 +157,7 @@ describe "Baz" do
 		}.to raise_error(/bam should be less than 100/)
 	end
 
-	it "rw acessor should has nil value" do
+	it "rw acessor should has nil value, supports predicate" do
 		baz = Baz.new( :bam => 99 )
 		
 		baz.has_boom?.should be_false
@@ -163,6 +166,28 @@ describe "Baz" do
 		baz.has_boom?.should be_true
 		baz.boom.should be_zero
 	end
+
+	it "rw acessor should has nil value, supports clearer" do
+		baz = Baz.new( :bam => 99, :boom => 0 )
+		
+		baz.has_boom?.should be_true
+		baz.boom.should be_zero
+		
+		baz.reset_boom!
+
+		baz.has_boom?.should be_false
+		baz.boom.should be_nil
+	end	
+
+	it "should be possible call the clearer twice" do
+		baz = Baz.new( :bam => 99, :boom => 0 )
+		
+		baz.reset_boom!
+		baz.reset_boom!
+		
+		baz.has_boom?.should be_false
+		baz.boom.should be_nil
+	end		
 end
 
 describe "Lol" do
@@ -173,5 +198,13 @@ describe "Lol" do
 		lol.c.should == 1
 		lol.d.should == -1
 		lol.e.should == 2
+	end
+
+	it "Lol should support custom predicate and clearer" do
+		lol = Lol.new(:a => 5, :d => -1)
+
+		lol.has_option_c?.should be_true
+		lol.reset_option_c
+		lol.has_option_c?.should be_false
 	end
 end
