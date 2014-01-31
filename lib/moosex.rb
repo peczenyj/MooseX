@@ -32,30 +32,40 @@ module MooseX
 	
 	module Core
 	
-		def has(attr_name, attr_options)
-			attr = MooseX::Attribute.new(attr_name, attr_options)
+		def has(attr_name, attr_options = {})
+			if attr_name.is_a? Array 
+				attr_name.each do |attr| 
+					has(attr, attr_options) 
+				end
+			elsif attr_name.is_a? Hash 
+				attr_name.each_pair do |attr, options |
+					has(attr, options)
+				end
+			else
 
-			g = attr.generate_getter
-			
-    		define_method attr_name, &g
- 
- 			s = attr.generate_setter
- 		
- 			if attr_options[:is].eql? :rw 
-			
-				define_method "#{attr_name}=", &s
-			
-			elsif attr_options[:is].eql? :rwp
+				attr = MooseX::Attribute.new(attr_name, attr_options)
 
-				define_method "#{attr_name}=", &s
+				g = attr.generate_getter
 				
-				private "#{attr_name}="
+	    		define_method attr_name, &g
+	 
+	 			s = attr.generate_setter
+	 		
+	 			if attr_options[:is].eql? :rw 
+				
+					define_method "#{attr_name}=", &s
+				
+				elsif attr_options[:is].eql? :rwp
 
+					define_method "#{attr_name}=", &s
+					
+					private "#{attr_name}="
+
+				end
+
+				__meta.add(attr)
 			end
-
-			__meta.add(attr)
 		end
-		
 	end	
 	
 	class Attribute

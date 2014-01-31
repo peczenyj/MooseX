@@ -49,6 +49,20 @@ A postmodern object system for Ruby [![Build Status](https://travis-ci.org/pecze
 
     end
 
+    class Lol 
+        include MooseX
+
+        has [:a, :b], {     # define attributes a and b
+            :is => :ro,     # with same set of properties
+            :default => 0,      
+        }
+
+        has :c => {         # alternative syntax to be 
+            :is => :ro,     # more similar to Moo/Moose    
+            :default => 1,      
+        }
+    end    
+
     # now you have a generic constructor
     p1  = Point.new                       # x and y will be 0
     p2  = Point.new( :x => 5 )            # y will be 0

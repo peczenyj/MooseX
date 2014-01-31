@@ -40,7 +40,25 @@ class Baz
 		:isa => lambda {|x| raise 'x should be less than 100' if x > 100},
 		:required => true
 	}
+end
 
+class Lol 
+	include MooseX
+
+	has [:a, :b], {
+		:is => :ro,
+		:default => 0,		
+	}
+
+	has :c => {
+		:is => :ro,
+		:default => 1,		
+	}
+
+	has [:d, :e] => {
+		:is => :ro,
+		:default => 2,		
+	}	
 end
 
 describe "MooseX" do
@@ -98,6 +116,15 @@ describe "MooseX" do
 				baz = Baz.new( :bam => 199 )
 			}.to raise_error(/x should be less than 100/)
 		end
+
+		it "LOL should has five arguments" do
+			lol = Lol.new(:a => 5, :d => -1)
+			lol.a.should == 5
+			lol.b.should be_zero
+			lol.c.should == 1
+			lol.d.should == -1
+			lol.e.should == 2
+		end		
 	end
 	
 	describe "should create a getter and a setter" do

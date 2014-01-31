@@ -1,3 +1,5 @@
+	- add support to handle more than one attribute #2
+
 0.0.2 - 2014-01-31
 	- fix one important bug, not it is possible use in more than one class
 	- add require option
