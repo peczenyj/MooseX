@@ -44,7 +44,9 @@ A postmodern object system for Ruby [![Build Status](https://travis-ci.org/pecze
             :isa => lambda {|x| # you should add your own validator
                 raise 'x should be less than 100' if x > 100
             },
-            :required => true
+            :required => true,
+            :predicate => true, # add has_bam? method, ask if the attribute is unset
+            :clearer => true,   # add reset_bam! method, unset the attribute
         }
 
     end
@@ -59,7 +61,9 @@ A postmodern object system for Ruby [![Build Status](https://travis-ci.org/pecze
 
         has :c => {         # alternative syntax to be 
             :is => :ro,     # more similar to Moo/Moose    
-            :default => 1,      
+            :default => 1,
+            :predicate => :can_haz_c?     # custom predicate
+            :clearer => "desintegrate_c"  # force coerce to symbol
         }
     end    
 
