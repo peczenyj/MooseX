@@ -1,4 +1,4 @@
-	- 
+	- support a custom name for getter / setter #9
 	
 0.0.7 - 2014-02-01
   - add min version of ruby should be 2.0.x
