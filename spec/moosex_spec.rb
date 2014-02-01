@@ -65,7 +65,8 @@ class Lol
 
 	has [:d, :e] => {
 		is: "ro",           # can coerce from strings
-		default: 2,		
+		default: 2,
+		required: true,		
 	}    
 end    
 

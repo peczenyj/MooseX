@@ -65,6 +65,7 @@ module MooseX
 
 		attr_reader :attr_symbol, :is 
 		DEFAULTS= { 
+			lazy: false,
 			clearer: false,
 			required: false, 
 			predicate: false,
@@ -104,6 +105,9 @@ module MooseX
 			required: lambda do |required, field_name| 
 				!!required 
 			end,
+			lazy: lambda do |lazy, field_name| 
+				!!lazy 
+			end,			
 			predicate: lambda do |predicate, field_name| 
 				if ! predicate
 					return false
@@ -199,10 +203,10 @@ module MooseX
 
 			if args.has_key? @attr_symbol
 				value = args[ @attr_symbol ]
-			elsif @required
-				raise "attr \"#{@attr_symbol}\" is required"
 			elsif @default
 				value = @default.call
+			elsif @required
+				raise "attr \"#{@attr_symbol}\" is required"
 			else
 				return
 			end
