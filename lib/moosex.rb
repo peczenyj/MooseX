@@ -67,18 +67,18 @@ module MooseX
 
 				g = attr.generate_getter
 				
-	    		define_method attr.attr_symbol, &g
+	    	define_method attr.reader, &g
 	 
 	 			s = attr.generate_setter
 	 		
 	 			case attr.is 
 	 			when :rw 				
-					define_method "#{attr.attr_symbol}=", &s
+					define_method attr.writter, &s
 				
 				when :rwp
-					define_method "#{attr.attr_symbol}=", &s
+					define_method attr.writter, &s
 					
-					private "#{attr.attr_symbol}="
+					private attr.writter
 				end
 
 				__meta.add(attr)
@@ -88,7 +88,7 @@ module MooseX
 	
 	class Attribute
 
-		attr_reader :attr_symbol, :is 
+		attr_reader :attr_symbol, :is, :reader, :writter
 		DEFAULTS= { 
 			lazy: false,
 			clearer: false,
@@ -199,12 +199,21 @@ module MooseX
 				end.reduce({}) do |hash,e| 
 					hash.merge(e)
 				end
-			end,			
+			end,
+			reader: lambda do |reader, field_name|
+				reader.to_sym
+			end,
+			writter: lambda do |writter, field_name|
+				writter.to_sym
+			end,				
 		};
 
 		def initialize(a, o)
 			# todo extract this to a framework, see issue #21 on facebook
-			o = DEFAULTS.merge(o)
+			o = DEFAULTS.merge({
+				reader: a,
+				writter: a.to_s.concat("=").to_sym
+			}).merge(o)
 
 			REQUIRED.each { |field| 
 				unless o.has_key?(field)
@@ -231,12 +240,13 @@ module MooseX
 			@clearer     = o[:clearer]
 			@handles     = o[:handles]
 			@lazy        = o[:lazy]
+			@reader      = o[:reader]
+			@writter     = o[:writter]
 		end
 		
 		def init(object, args)
 			inst_variable_name = "@#{@attr_symbol}".to_sym
 			
-			setter = @attr_symbol.to_s.concat("=").to_sym
 			value  = nil
 
 			attr_symbol = @attr_symbol
@@ -280,7 +290,7 @@ module MooseX
 			
 			else
 
-				object.send( setter, value )
+				object.send( @writter, value )
 				
 			end	
 		end

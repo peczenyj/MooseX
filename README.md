@@ -96,6 +96,34 @@ class Target
   def method_y(a,b,c); a + b + c; end # or methods with arguments
 end
 
+class Point3D < Point
+
+  has x: {        # override original attr!
+    is: :rw,
+    isa: Integer,
+    default: 1,
+  }
+  
+  has z: {
+    is: :rw,      # read-write (mandatory)
+    isa: Integer, # should be Integer
+    default: 0,   # default value is 0 (constant)
+  }
+
+  has color: {
+    is: :rw,      # you should specify the reader/writter
+    reader: :what_is_the_color_of_this_point,
+    writter: :set_the_color_of_this_point,
+    default: :red,
+  }
+
+  def clear 
+    self.x= 0      # to run with type-check you must
+    self.y= 0      # use the setter instad @x=
+    self.z= 0
+  end
+end 
+
 # now you have a generic constructor
 p1  = Point.new                       # x and y will be 0
 p2  = Point.new( x:  5 )              # y will be 0

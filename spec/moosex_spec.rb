@@ -362,9 +362,16 @@ class Point3D < Point
 		default: 0,   # default value is 0 (constant)
 	}
 
+	has color: {
+		is: :rw,      # you should specify the reader/writter
+		reader: :what_is_the_color_of_this_point,
+		writter: :set_the_color_of_this_point,
+		default: :red,
+	}
+
 	def clear 
-		self.x= 0        # to run with type-check you must
-		self.y= 0        # use the setter instad @x=
+		self.x= 0      # to run with type-check you must
+		self.y= 0      # use the setter instad @x=
 		self.z= 0
 	end
 end 
@@ -376,20 +383,23 @@ describe "Point3D" do
 			p.x.should == 1
 			p.y.should be_zero
 			p.z.should be_zero
+			p.what_is_the_color_of_this_point.should == :red
 		end
 	
 		it "should initialize only y" do
 			p = Point3D.new( x: 5 )
 			p.x.should == 5
 			p.y.should be_zero
-			p.z.should be_zero			
+			p.z.should be_zero
+			p.what_is_the_color_of_this_point.should == :red						
 		end
 	
 		it "should initialize x and y" do
-			p = Point3D.new( x: 5, y: 4, z: 8)
+			p = Point3D.new( x: 5, y: 4, z: 8, color: :yellow)
 			p.x.should == 5
 			p.y.should == 4
 			p.z.should == 8
+			p.what_is_the_color_of_this_point.should == :yellow			
 		end
 	end
 	
@@ -421,4 +431,13 @@ describe "Point3D" do
 			p.z.should be_zero			
 		end	
 	end	
+
+	describe "should create the accessors names with custom names" do
+		it "should get/set" do
+			p = Point3D.new
+			p.what_is_the_color_of_this_point.should == :red
+			p.set_the_color_of_this_point(:black)
+			p.what_is_the_color_of_this_point.should == :black
+		end
+	end
 end
