@@ -119,15 +119,123 @@ Or install it yourself as:
 
     $ gem install moosex
 
-## Usage
+## Description
 
 MooseX is an extension of Ruby object system. The main goal of MooseX is to make Ruby Object Oriented programming easier, more consistent, and less tedious. With MooseX you can think more about what you want to do and less about the mechanics of OOP. It is a port of Moose/Moo from Perl to Ruby world.
 
 Read more about Moose on http://moose.iinteractive.com/en/
 
+## Motivation
+
+It is fun
+
+## Usage
+
+When you incluse the MooseX module in your class you can declare your attributes. The module provides a new constructor for you, you should not define 'initialize' anymore.
+
+
+```ruby
+require 'moosex'
+
+class Point
+  include MooseX
+
+  has x: {
+    is: :rw,           # read-write (mandatory)
+    isa: Integer,      # should be Integer
+    default: 0,        # default value is 0 (constant)
+    required: false,   # if true, will be required in the constructor
+    predicate: false,  # if true, add has_x? method
+    clearer: false,    # if true, add clear_x! method 
+    handles: [ :to_s ],# used for method delegation  
+  }
+  ...
+end
+```
+
+in this example we add the attribute x, with read-write acessors, a default value and a type check.
+
+```ruby
+p1 = Point.new          # x will be initialize with 0 (default)
+p2 = Point.new(x: 50)   # initialize x in the constructur
+p3 = Point.new(x: "50") # will raise exception
+p1.x = "lol"            # will raise too
+```
+
+to use the type check feature you must use the writter method for the attribute.
+
+### Advantages
+
+instead
+```ruby
+class Foo
+  attr_accessor :bar, :baz, :bam
+
+  def initialize(bar=0, baz=0, bam=0)
+    unless [bar, baz, bam].all? {|x| x.is_a? Integer }
+      raise "you should use only Integers to build Foo"
+    end
+    @bar = bar
+    @baz = baz
+    @bam = bam
+  end
+end
+```
+you can
+```ruby
+class Foo
+  include MooseX
+
+  has [:bar, :baz, :bam], {
+    is: :rw,
+    isa: Integer,
+    default: 0
+  }
+end
+``` 
+instead
+```ruby
+class Proxy
+  def initialize(target)
+    @target=target
+  end
+
+  def method_x(a,b,c)
+    @target.method_x(a,b,c)
+  end
+  def method_y(a,b,c)
+    @target.method_y(a,b,c)
+  end 
+end
+```
+you can
+```ruby
+class Proxy
+  include MooseX
+
+  has :target, {
+    is: :ro,
+    handles => [ :method_x, :method_y ]
+  }
+end
+```
+and much more
+
+## TODO
+
+1. Support to lazy attributes
+2. Support to BUILD and BUILDARGS hook
+3. Support to Roles ( it is a Module on Steroids )
+4. Support to after/before/around 
+5. Improve the typecheck system (we should specify: we need an array of positive integers)
+6. Improve the exception and warning system
+7. Profit!
+
 ## Limitations
 
-do not extend a MooseX class yet. consequences never will be the same.
+Experimental module, be careful.
+
+Now has limited support to subclassing.
 
 ## Contributing
 

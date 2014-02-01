@@ -1,3 +1,7 @@
+  - fix bug when extends subclass, now it is safe #18
+  - required attr with default value will no longer throw exception #30
+  - supports handles for: single method, array, Class or Module #27
+
 0.0.5 - 2014-01-31
 	- should support handles #13 (partial)
 
