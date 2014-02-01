@@ -1,3 +1,6 @@
+0.0.7 - 2014-02-01
+  - add min version of ruby should be 2.0.x
+  
 0.0.6 - 2014-02-01
   - fix bug when extends subclass, now it is safe #18
   - required attr with default value will no longer throw exception #30

@@ -119,6 +119,8 @@ Or install it yourself as:
 
     $ gem install moosex
 
+You need ruby 2.0.x or superior.
+
 ## Description
 
 MooseX is an extension of Ruby object system. The main goal of MooseX is to make Ruby Object Oriented programming easier, more consistent, and less tedious. With MooseX you can think more about what you want to do and less about the mechanics of OOP. It is a port of Moose/Moo from Perl to Ruby world.
