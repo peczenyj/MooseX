@@ -19,90 +19,7 @@ class Point
 		self.x= 0        # to run with type-check you must
 		self.y= 0        # use the setter instad @x=
 	end
-end
-
-class Foo
-    include MooseX
-
-    has bar: {  
-      is: :rwp,       # read-write-private (private setter)
-      required: true, # you should require in the constructor 
-    }
-end
-
-class Baz
-    include MooseX
-
-    has bam: {
-      is: :ro,             # read-only, you should specify in new only
-      isa: lambda do |bam| # you should add your own validator
-          raise 'bam should be less than 100' if bam > 100
-      end,
-      required: true,
-    }
-
-	has boom: {
-		is: :rw,
-    predicate: true,     # add has_boom? method, ask if the attribute is unset
-    clearer: true,       # add reset_boom! method, unset the attribute
-	}
-end
-
-class Lol 
-    include MooseX
-
-    has [:a, :b], {          # define attributes a and b
-      is: :ro,               # with same set of properties
-      default: 0,      
-    }
-
-    has c: {                 # alternative syntax to be 
-      is: :ro,               # more similar to Moo/Moose    
-      default: 1,
-      predicate: :can_haz_c?,     # custom predicate
-      clearer: "desintegrate_c",  # force coerce to symbol
-    }
-
-	has [:d, :e] => {
-		is: "ro",           # can coerce from strings
-		default: 2,
-		required: true,		
-	}    
-end    
-
-class Proxy
-	include MooseX
-
-	has target: {
-		is:  :ro,
-		default: lambda { Target.new }, # default, new instace of Target
-		handles: {                      # handles is for delegation,
-			my_method_x: :method_x,     # inject methods with new names 
-			my_method_y: :method_y,	    # old => obj.target.method_x
-		},                              # now => obj.my_method_x
-	}
-end
-
-class Target 
-	def method_x; 1024; end             # works with simple methods
-	def method_y(a,b,c); a + b + c; end # or methods with arguments
-end
-
-describe "Proxy" do
-	it "should delegate method_x to the target" do
-		p = Proxy.new
-
-		p.target.method_x.should == 1024
-		p.my_method_x.should == 1024
-	end
-
-	it "should delegate method_y to the target" do
-		p = Proxy.new
-
-		p.target.method_y(1,2,3).should == 6
-		p.my_method_y(1,2,3).should == 6
-	end	
-end
+end 
 
 describe "Point" do
 	describe "should has an intelligent constructor" do
@@ -154,6 +71,15 @@ describe "Point" do
 	end	
 end
 
+class Foo
+    include MooseX
+
+    has bar: {  
+      is: :rwp,       # read-write-private (private setter)
+      required: true, # you should require in the constructor 
+    }
+end
+
 describe "Foo" do
 	it "should require bar if necessary" do 
 		expect {
@@ -173,6 +99,24 @@ describe "Foo" do
 		}.to raise_error(NoMethodError)
 	end
 end 
+
+class Baz
+    include MooseX
+
+    has bam: {
+      is: :ro,             # read-only, you should specify in new only
+      isa: lambda do |bam| # you should add your own validator
+          raise 'bam should be less than 100' if bam > 100
+      end,
+      required: true,
+    }
+
+	has boom: {
+		is: :rw,
+    predicate: true,     # add has_boom? method, ask if the attribute is unset
+    clearer: true,       # add reset_boom! method, unset the attribute
+	}
+end
 
 describe "Baz" do
 	it "should require bam if necessary" do 
@@ -226,6 +170,28 @@ describe "Baz" do
 	end		
 end
 
+class Lol 
+    include MooseX
+
+    has [:a, :b], {          # define attributes a and b
+      is: :ro,               # with same set of properties
+      default: 0,      
+    }
+
+    has c: {                 # alternative syntax to be 
+      is: :ro,               # more similar to Moo/Moose    
+      default: 1,
+      predicate: :can_haz_c?,     # custom predicate
+      clearer: "desintegrate_c",  # force coerce to symbol
+    }
+
+	has [:d, :e] => {
+		is: "ro",           # can coerce from strings
+		default: 2,
+		required: true,		
+	}    
+end
+
 describe "Lol" do
 	it "Lol should has five arguments" do
 		lol = Lol.new(a: 5, d: -1)
@@ -243,4 +209,141 @@ describe "Lol" do
 		lol.desintegrate_c
 		lol.can_haz_c?.should be_false
 	end
+end
+
+class ProxyToTarget
+	include MooseX
+
+	has target: {
+		is:  :ro,
+		default: lambda { Target.new }, # default, new instace of Target
+		handles: {                      # handles is for delegation,
+			my_method_x: :method_x,       # inject methods with new names 
+			my_method_y: :method_y,	      # old => obj.target.method_x
+		},                              # now => obj.my_method_x
+	}
+end
+
+module TargetModule
+	def method_x; 1024; end             # works with simple methods
+	def method_y(a,b,c); a + b + c; end # or methods with arguments
+end
+
+class Target 
+	include TargetModule
+end
+
+describe "ProxyToTarget" do
+	it "should delegate method_x to the target" do
+		p = ProxyToTarget.new
+
+		p.target.method_x.should == 1024
+		p.my_method_x.should == 1024
+	end
+
+	it "should delegate method_y to the target" do
+		p = ProxyToTarget.new
+
+		p.target.method_y(1,2,3).should == 6
+		p.my_method_y(1,2,3).should == 6
+	end	
+end
+
+class ProxyToTargetUsingArrayOfMethods
+	include MooseX
+
+	has targetz: {
+		is:  :ro,
+		default: lambda { Target.new }, 
+		handles: [ 
+			:method_x, :method_y      # will inject all methods with same name
+		] 
+	}
+end
+
+describe "ProxyToTargetUsingArrayOfMethods" do
+	it "should delegate method_x to the target" do
+		p = ProxyToTargetUsingArrayOfMethods.new
+
+		p.targetz.method_x.should == 1024
+		p.method_x.should == 1024
+	end
+
+	it "should delegate method_y to the target" do
+		p = ProxyToTargetUsingArrayOfMethods.new
+
+		p.targetz.method_y(1,2,3).should == 6
+		p.method_y(1,2,3).should == 6
+	end	
+end
+
+class ProxyToTargetUsingSingleMethod
+	include MooseX
+
+	has target: {
+		is:  :ro,
+		default: lambda { Target.new }, 
+		handles: "method_x"         # coerce to an array of symbols
+	}
+end
+
+describe "ProxyToTargetUsingSingleMethod" do
+	it "should delegate method_x to the target" do
+		p = ProxyToTargetUsingSingleMethod.new
+
+		p.target.method_x.should == 1024
+		p.method_x.should == 1024
+	end
+end
+
+class ProxyToTargetUsingModule
+	include MooseX
+
+	has target: {
+		is:  :ro,
+		default: lambda { Target.new }, 
+		handles: TargetModule          # will import all methods from module
+	}
+end
+
+describe "ProxyToTargetUsingModule" do
+	it "should delegate method_x to the target" do
+		p = ProxyToTargetUsingModule.new
+
+		p.target.method_x.should == 1024
+		p.method_x.should == 1024
+	end
+
+	it "should delegate method_y to the target" do
+		p = ProxyToTargetUsingModule.new
+
+		p.target.method_y(1,2,3).should == 6
+		p.method_y(1,2,3).should == 6
+	end		
+end
+
+class ProxyToTargetUsingClass
+	include MooseX
+
+	has target: {
+		is:  :ro,
+		default: lambda { Target.new }, 
+		handles: Target                   # will use only public methods on Target class
+	}                                   # exclude methods from superclass
+end
+
+describe "ProxyToTargetUsingClass" do
+	it "should delegate method_x to the target" do
+		p = ProxyToTargetUsingClass.new
+
+		p.target.method_x.should == 1024
+		p.method_x.should == 1024
+	end
+
+	it "should delegate method_y to the target" do
+		p = ProxyToTargetUsingClass.new
+
+		p.target.method_y(1,2,3).should == 6
+		p.method_y(1,2,3).should == 6
+	end		
 end

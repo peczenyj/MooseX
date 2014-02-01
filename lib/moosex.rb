@@ -137,10 +137,45 @@ module MooseX
 				end
 			end,
 			handles: lambda do |handles, field_name|
-				# TODO:
-				# if single method
-				# if array of methods
-				handles
+							
+				unless handles.is_a? Hash 
+
+					array_of_handles = handles
+
+					unless array_of_handles.is_a? Array
+						array_of_handles = [ array_of_handles ]
+					end
+
+					handles = array_of_handles.map do |handle|
+
+						if handle == BasicObject
+							
+							raise "ops, should not use BasicObject for handles in #{field_name}"
+						
+						elsif handle.is_a? Class
+
+							handle = handle.public_instance_methods - handle.superclass.public_instance_methods
+						
+						elsif handle.is_a? Module
+							
+							handle = handle.public_instance_methods
+
+						end
+						
+						handle
+
+					end.flatten.reduce({}) do |hash, method_name|
+						hash.merge({ method_name => method_name })
+					end
+				end
+
+				x = handles.map do |key,value|
+					{ key.to_sym => value.to_sym }
+				end.reduce({}) do |hash,e| 
+					hash.merge(e)
+				end
+
+				x
 			end,			
 		};
 
@@ -172,6 +207,7 @@ module MooseX
 			@predicate   = o[:predicate]
 			@clearer     = o[:clearer]
 			@handles     = o[:handles]
+			@lazy        = o[:lazy]
 		end
 		
 		def init(object, args)
