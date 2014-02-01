@@ -1,3 +1,4 @@
+	- support lazy attributes / builder #4
 	- support a custom name for getter / setter #9
 	
 0.0.7 - 2014-02-01

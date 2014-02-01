@@ -88,7 +88,7 @@ module MooseX
 	
 	class Attribute
 
-		attr_reader :attr_symbol, :is, :reader, :writter
+		attr_reader :attr_symbol, :is, :reader, :writter, :lazy, :builder
 		DEFAULTS= { 
 			lazy: false,
 			clearer: false,
@@ -106,7 +106,6 @@ module MooseX
 					raise "invalid value for field '#{field_name}' is '#{is}', must be one of :rw, :rwp, :ro or :lazy"  
 				end
 			end,
-			handles: lambda {|handles, field_name| true }, # TODO: add implementation
 		};
 
 		COERCE = {
@@ -205,14 +204,26 @@ module MooseX
 			end,
 			writter: lambda do |writter, field_name|
 				writter.to_sym
-			end,				
+			end,
+			builder: lambda do |builder, field_name|
+				unless builder.is_a? Proc
+					builder_method_name = builder.to_sym
+					builder = lambda do |object|
+						object.send(builder_method_name)
+					end
+				end
+
+				builder
+			end,		
 		};
 
 		def initialize(a, o)
 			# todo extract this to a framework, see issue #21 on facebook
+
 			o = DEFAULTS.merge({
 				reader: a,
-				writter: a.to_s.concat("=").to_sym
+				writter: a.to_s.concat("=").to_sym,
+			  builder: "build_#{a}".to_sym,
 			}).merge(o)
 
 			REQUIRED.each { |field| 
@@ -229,6 +240,14 @@ module MooseX
 				return if ! o.has_key? field
 
 				validate.call(o[field], a)
+			end
+
+			if o[:is].eql? :lazy
+				o[:lazy] = true
+			end
+
+			unless o[:lazy]
+				o[:builder] = nil
 			end	
 
 			@attr_symbol = a
@@ -242,6 +261,7 @@ module MooseX
 			@lazy        = o[:lazy]
 			@reader      = o[:reader]
 			@writter     = o[:writter]
+			@builder     = o[:builder]
 		end
 		
 		def init(object, args)
@@ -280,12 +300,13 @@ module MooseX
 				return
 			end
  
- 			if @is.eql? :ro
+ 			if @is.eql?(:ro) || @is.eql?(:lazy)
 
  				# TODO: remove redundancy
 
-				type_check = generate_type_check
+				type_check = @isa
 				type_check.call(value)
+
 				object.instance_variable_set inst_variable_name, value
 			
 			else
@@ -297,21 +318,36 @@ module MooseX
 		
 		def generate_getter
 			inst_variable_name = "@#{@attr_symbol}".to_sym
-			Proc.new { instance_variable_get inst_variable_name }
+			
+			builder    = @builder
+			before_get = lambda {|object|  }
+
+			if @lazy
+				type_check = @isa
+
+				before_get = lambda do |object|
+					return if object.instance_variable_defined? inst_variable_name
+
+					value = builder.call(object)
+					type_check.call(value)
+
+					object.instance_variable_set(inst_variable_name, value)					
+				end
+			end
+
+			Proc.new do 
+				before_get.call(self)
+				instance_variable_get inst_variable_name 
+			end
 		end
 		
 		def generate_setter
 			inst_variable_name = "@#{@attr_symbol}".to_sym
-			type_check = generate_type_check
+			type_check = @isa
 			Proc.new  do |value| 
 				type_check.call(value)
 				instance_variable_set inst_variable_name, value
 			end
-		end
-		
-		def generate_type_check
-
-			return @isa
-		end			
+		end	
 	end
 end

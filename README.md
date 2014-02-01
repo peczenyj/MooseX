@@ -251,9 +251,43 @@ end
 ```
 and much more
 
+## Lazy Attributes
+
+```ruby
+class LazyFox
+  include MooseX
+
+  has something: {
+    is: :lazy
+  }
+
+  has other_thing: {
+    is: :rw,
+    lazy: true,
+    predicate: true,
+    clearer: true,
+    builder: :my_build_other_thing,
+  }
+
+  has lazy_attr_who_accepts_lambda: {
+    is: :lazy,
+    builder: lambda{ |object| 2 }
+  }
+
+  def build_something
+    1024
+  end
+
+  private 
+  def my_build_other_thing
+    128
+  end
+end
+```
+
 ## TODO
 
-1. Support to lazy attributes
+1. Support to lazy attributes [done]
 2. Support to BUILD and BUILDARGS hook
 3. Support to Roles ( it is a Module on Steroids )
 4. Support to after/before/around 
