@@ -2,6 +2,8 @@
 
 A postmodern object system for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX)
 
+THIS MODULE IS EXPERIMENTAL YET! BE CAREFUL!
+
 ```ruby
     require 'moosex'
     
@@ -111,6 +113,10 @@ Or install it yourself as:
 ## Usage
 
 MooseX is an extension of Ruby object system. The main goal of MooseX is to make Ruby Object Oriented programming easier, more consistent, and less tedious. With MooseX you can think more about what you want to do and less about the mechanics of OOP. It is a port of Moose/Moo from Perl to Ruby world.
+
+## Limitations
+
+do not extend a MooseX class yet. consequences never will be the same.
 
 ## Contributing
 
