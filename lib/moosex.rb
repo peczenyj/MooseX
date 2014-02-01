@@ -7,11 +7,11 @@ require "moosex/version"
 
 module MooseX
 	
-	def self.included(o)
+	def MooseX.included(c)
 			
-		o.extend(MooseX::Core)
+		c.extend(MooseX::Core)
 			
-		o.class_exec do 
+		c.class_exec do 
 			meta = MooseX::Meta.new
 
 			define_singleton_method(:__meta) { meta }
@@ -22,9 +22,34 @@ module MooseX
 			self.class.__meta().init(self, args)
 
 		end
+
+		def c.inherited(subclass)
+			subclass.class_exec do 
+				old_meta = subclass.__meta
+
+				meta = MooseX::Meta.new(old_meta.attrs)
+
+				define_singleton_method(:__meta) { meta }
+			end    		
+   	end		
 					
 	end
 	
+	class Meta
+		attr_reader :attrs
+		def initialize(attrs=[])
+			@attrs = attrs.map{|att| att.clone }
+		end
+		
+		def add(attr)
+			@attrs << attr
+		end
+		
+		def init(object, args)
+			@attrs.each{ |attr| attr.init(object, args) }
+		end
+	end	
+
 	module Core
 	
 		def has(attr_name, attr_options = {})
@@ -169,13 +194,11 @@ module MooseX
 					end
 				end
 
-				x = handles.map do |key,value|
+				handles.map do |key,value|
 					{ key.to_sym => value.to_sym }
 				end.reduce({}) do |hash,e| 
 					hash.merge(e)
 				end
-
-				x
 			end,			
 		};
 
@@ -281,18 +304,4 @@ module MooseX
 			return @isa
 		end			
 	end
-	
-	class Meta
-		def initialize
-			@attrs = []
-		end
-		
-		def add(attr)
-			@attrs << attr
-		end
-		
-		def init(object, args)
-			@attrs.each{ |attr| attr.init(object, args) }
-		end
-	end	
 end

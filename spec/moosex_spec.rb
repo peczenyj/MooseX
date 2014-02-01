@@ -347,3 +347,78 @@ describe "ProxyToTargetUsingClass" do
 		p.method_y(1,2,3).should == 6
 	end		
 end
+
+class Point3D < Point
+
+	has x: {        # override original attr!
+		is: :rw,
+		isa: Integer,
+		default: 1,
+	}
+	
+	has z: {
+		is: :rw,      # read-write (mandatory)
+		isa: Integer, # should be Integer
+		default: 0,   # default value is 0 (constant)
+	}
+
+	def clear 
+		self.x= 0        # to run with type-check you must
+		self.y= 0        # use the setter instad @x=
+		self.z= 0
+	end
+end 
+
+describe "Point3D" do
+	describe "should has an intelligent constructor" do
+		it "without arguments, should initialize with default values" do
+			p = Point3D.new
+			p.x.should == 1
+			p.y.should be_zero
+			p.z.should be_zero
+		end
+	
+		it "should initialize only y" do
+			p = Point3D.new( x: 5 )
+			p.x.should == 5
+			p.y.should be_zero
+			p.z.should be_zero			
+		end
+	
+		it "should initialize x and y" do
+			p = Point3D.new( x: 5, y: 4, z: 8)
+			p.x.should == 5
+			p.y.should == 4
+			p.z.should == 8
+		end
+	end
+	
+	describe "should create a getter and a setter" do
+		it "for z" do
+			p = Point3D.new
+			p.z= 5
+			p.z.should == 5
+		end		
+		
+		it "for z, with type check" do
+			p = Point3D.new
+			expect { 
+				p.z = "lol" 
+			}.to raise_error('isa check for "z" failed: is not instance of Integer!')
+		end	
+		
+		it "for z, with type check" do			
+			expect { 
+				Point3D.new(z: "lol") 
+			}.to raise_error('isa check for "z" failed: is not instance of Integer!')
+		end	
+
+		it "clear should clean attributes" do
+			p = Point3D.new( x: 5, y: 4, z: 9)
+			p.clear
+			p.x.should be_zero
+			p.y.should be_zero	
+			p.z.should be_zero			
+		end	
+	end	
+end
