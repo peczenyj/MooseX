@@ -1,95 +1,90 @@
-#require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 require 'moosex'
 
 class Point
 	include MooseX
-	
+
 	has x: {
-		is: :rw,
-		isa: Integer,
-		default: 0,
+		is: :rw,      # read-write (mandatory)
+		isa: Integer, # should be Integer
+		default: 0,   # default value is 0 (constant)
 	}
 
 	has y: {
 		is: :rw,
 		isa: Integer,
-		default: lambda { 0 },
+		default: lambda { 0 }, # you should specify a lambda
 	}
-	
+
 	def clear 
-		self.x= 0
-		self.y= 0
+		self.x= 0        # to run with type-check you must
+		self.y= 0        # use the setter instad @x=
 	end
 end
 
 class Foo
-	include MooseX
+    include MooseX
 
-	has bar: {
-		is: :rwp,
-		isa: Integer,
-		required: true
-	}
+    has bar: {  
+      is: :rwp,       # read-write-private (private setter)
+      required: true, # you should require in the constructor 
+    }
 end
 
 class Baz
-	include MooseX
+    include MooseX
 
-	has bam: {
-		is: :ro,
-		isa: lambda {|bam| raise 'bam should be less than 100' if bam > 100},
-		required: true
-	}
+    has bam: {
+      is: :ro,             # read-only, you should specify in new only
+      isa: lambda do |bam| # you should add your own validator
+          raise 'bam should be less than 100' if bam > 100
+      end,
+      required: true,
+    }
+
 	has boom: {
 		is: :rw,
-		predicate: true,
-		clearer: true,
+    predicate: true,     # add has_boom? method, ask if the attribute is unset
+    clearer: true,       # add reset_boom! method, unset the attribute
 	}
 end
 
 class Lol 
-	include MooseX
+    include MooseX
 
-	has [:a, :b], {
-		is: :ro,
-		default: 0,		
-	}
+    has [:a, :b], {          # define attributes a and b
+      is: :ro,               # with same set of properties
+      default: 0,      
+    }
 
-	has c: {
-		is:  :ro,
-		default:  1,
-		predicate:  :has_option_c?,
-		clearer:  "reset_option_c", # force coerce
-	}
+    has c: {                 # alternative syntax to be 
+      is: :ro,               # more similar to Moo/Moose    
+      default: 1,
+      predicate: :can_haz_c?,     # custom predicate
+      clearer: "desintegrate_c",  # force coerce to symbol
+    }
 
 	has [:d, :e] => {
-		is: "ro",
+		is: "ro",           # can coerce from strings
 		default: 2,		
-	}	
-end
-
-class Target 
-	def method_x
-		1024
-	end
-
-	def method_y(a,b,c)
-		a + b + c
-	end
-end
+	}    
+end    
 
 class Proxy
 	include MooseX
 
 	has target: {
 		is:  :ro,
-		isa:  Target,
-		default: lambda { Target.new() },
-		handles: {
-			my_method_x: :method_x,
-			my_method_y: :method_y,	
-		},
+		default: lambda { Target.new }, # default, new instace of Target
+		handles: {                      # handles is for delegation,
+			my_method_x: :method_x,     # inject methods with new names 
+			my_method_y: :method_y,	    # old => obj.target.method_x
+		},                              # now => obj.my_method_x
 	}
+end
+
+class Target 
+	def method_x; 1024; end             # works with simple methods
+	def method_y(a,b,c); a + b + c; end # or methods with arguments
 end
 
 describe "Proxy" do
@@ -243,8 +238,8 @@ describe "Lol" do
 	it "Lol should support custom predicate and clearer" do
 		lol = Lol.new(a: 5, d: -1)
 
-		lol.has_option_c?.should be_true
-		lol.reset_option_c
-		lol.has_option_c?.should be_false
+		lol.can_haz_c?.should be_true
+		lol.desintegrate_c
+		lol.can_haz_c?.should be_false
 	end
 end

@@ -5,95 +5,102 @@ A postmodern object system for Ruby [![Build Status](https://travis-ci.org/pecze
 THIS MODULE IS EXPERIMENTAL YET! BE CAREFUL!
 
 ```ruby
-    require 'moosex'
-    
-    class Point
-    	include MooseX
-	
-    	has x: {
-    		is: :rw,      # read-write 
-    		isa: Integer, # should be Integer
-    		default: 0,   # default value is 0 (constant)
-    	}
+require 'moosex'
 
-    	has y: {
-    		is: :rw,
-    		isa: Integer,
-    		default: lambda { 0 }, # you should specify a lambda
-    	}
-	
-    	def clear 
-    		self.x= 0        # to run with type-check you must
-    		self.y= 0        # use the setter instad @x=
-    	end
-    end
+class Point
+  include MooseX
 
-    class Foo
-        include MooseX
+  has x: {
+    is: :rw,      # read-write (mandatory)
+    isa: Integer, # should be Integer
+    default: 0,   # default value is 0 (constant)
+  }
 
-        has bar: {  
-            is: :rwp,      # read-write-private (private setter)
-            isa: Integer, 
-            required: true, # you should require in the constructor 
-        }
-    end
+  has y: {
+    is: :rw,
+    isa: Integer,
+    default: lambda { 0 }, # you should specify a lambda
+  }
 
-    class Baz
-        include MooseX
+  def clear 
+    self.x= 0    # to run with type-check you must
+    self.y= 0    # use the setter instad @x=
+  end
+end
 
-        has bam: {
-            is: :ro,         # read-only, you should specify in new only
-            isa: lambda {|x| # you should add your own validator
-                raise 'x should be less than 100' if x > 100
-            },
-            required: true,
-            predicate: true, # add has_bam? method, ask if the attribute is unset
-            clearer: true,   # add reset_bam! method, unset the attribute
-        }
+class Foo
+    include MooseX
 
-    end
+    has bar: {  
+        is: :rwp,            # read-write-private (private setter) 
+        required: true,      # you should require in the constructor 
+    }
+end
 
-    class Lol 
-        include MooseX
+class Baz
+    include MooseX
 
-        has [:a, :b], {     # define attributes a and b
-            is: :ro,        # with same set of properties
-            default: 0,      
-        }
+    has bam: {
+        is: :ro,             # read-only, you should specify in new only
+        isa: lambda do |bam| # you should add your own validator
+            raise 'bam should be less than 100' if bam > 100
+        end,
+        required: true,
+    }
 
-        has c: {         # alternative syntax to be 
-            is: :ro,     # more similar to Moo/Moose    
-            default: 1,
-            predicate: :can_haz_c?,     # custom predicate
-            clearer: "desintegrate_c",  # force coerce to symbol
-        }
-    end    
+  has boom: {
+    is: :rw,
+        predicate: true,     # add has_boom? method, ask if the attribute is unset
+        clearer: true,       # add reset_boom! method, unset the attribute
+  }
+end
 
-    class Target 
-        def method_x
-            1024
-        end
-    end
+class Lol 
+    include MooseX
 
-    class Proxy
-        include MooseX
+    has [:a, :b], {          # define attributes a and b
+        is: :ro,             # with same set of properties
+        default: 0,      
+    }
 
-        has target: {
-            is: :ro,
-            default: lambda { Target.new() },
-            handles: {
-                my_method_x: :method_x,   # create my_method_x in Proxy
-            },                            # this will delegate to @target.method_x
-        }
-    end
+    has c: {                 # alternative syntax to be 
+        is: :ro,             # more similar to Moo/Moose    
+        default: 1,
+        predicate: :can_haz_c?,     # custom predicate
+        clearer: "desintegrate_c",  # force coerce to symbol
+    }
 
-    # now you have a generic constructor
-    p1  = Point.new                       # x and y will be 0
-    p2  = Point.new( x:  5 )              # y will be 0
-    p3  = Point.new( x:  5, y: 4)
-    foo = Foo.new( bar: 123 )             # without bar will raise exception
-    baz = Baz.new( bam: 99 )              # if bam > 100 will raise exception
-    Proxy.new.my_method_x                 # will call method_x in target, return 1024
+  has [:d, :e] => {
+    is: "ro",                # can coerce from strings
+    default: 2,   
+  }    
+end    
+
+class Proxy
+  include MooseX
+
+  has target: {
+    is:  :ro,
+    default: lambda { Target.new }, # default, new instace of Target
+    handles: {                      # handles is for delegation,
+      my_method_x: :method_x,       # inject methods with new names 
+      my_method_y: :method_y,       # old => obj.target.method_x
+    },                              # now => obj.my_method_x
+  }
+end
+
+class Target 
+  def method_x; 1024; end             # works with simple methods
+  def method_y(a,b,c); a + b + c; end # or methods with arguments
+end
+
+# now you have a generic constructor
+p1  = Point.new                       # x and y will be 0
+p2  = Point.new( x:  5 )              # y will be 0
+p3  = Point.new( x:  5, y: 4)
+foo = Foo.new( bar: 123 )             # without bar will raise exception
+baz = Baz.new( bam: 99 )              # if bam > 100 will raise exception
+Proxy.new.my_method_x                 # will call method_x in target, return 1024
 ```
     
 ## Installation
