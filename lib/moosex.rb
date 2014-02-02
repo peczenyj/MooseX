@@ -223,8 +223,8 @@ module MooseX
 			trigger: lambda do |trigger, field_name|
 				unless trigger.is_a? Proc
 					trigger_method_name = trigger.to_sym
-					trigger = lambda do |object|
-						object.send(trigger_method_name)
+					trigger = lambda do |object, value|
+						object.send(trigger_method_name,value)
 					end
 				end
 
@@ -336,7 +336,7 @@ module MooseX
  				value = @coerce.call(value)
 
 				@isa.call( value )
-
+				@trigger.call(object, value)
 				object.instance_variable_set inst_variable_name, value
 			
 			else
@@ -355,13 +355,14 @@ module MooseX
 			if @lazy
 				type_check = @isa
 				coerce     = @coerce
+				trigger    = @trigger
 				before_get = lambda do |object|
 					return if object.instance_variable_defined? inst_variable_name
 
 					value = builder.call(object)
 					value = coerce.call(value)
 					type_check.call(value)
-
+					trigger.call(object, value)
 					object.instance_variable_set(inst_variable_name, value)					
 				end
 			end
@@ -376,9 +377,11 @@ module MooseX
 			inst_variable_name = "@#{@attr_symbol}".to_sym
 			coerce     = @coerce
 			type_check = @isa
+			trigger    = @trigger
 			Proc.new  do |value| 
 				value = coerce.call(value)
 				type_check.call(value)
+				trigger.call(self,value)
 				instance_variable_set inst_variable_name, value
 			end
 		end	
