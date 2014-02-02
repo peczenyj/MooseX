@@ -271,7 +271,7 @@ class LazyFox
 
   has lazy_attr_who_accepts_lambda: {
     is: :lazy,
-    builder: lambda{ |object| 2 }
+    builder: lambda{ |object|  object.something }
   }
 
   def build_something

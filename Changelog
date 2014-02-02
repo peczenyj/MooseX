@@ -1,3 +1,4 @@
+0.0.8 - 2014-02-01
   - should support init_arg option in attr #14
 	- support lazy attributes / builder #4
 	- support a custom name for getter / setter #9
