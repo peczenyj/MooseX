@@ -319,31 +319,28 @@ module MooseX
 				end
 			end
 
+			value_from_default = false
 			if args.has_key? @init_arg
 				value = args[ @init_arg ]
 			elsif @default
 				value = @default.call
+				value_from_default = true
 			elsif @required
 				raise "attr \"#{@attr_symbol}\" is required"
 			else
 				return
 			end
  
- 			if @is.eql?(:ro) || @is.eql?(:lazy)
 
- 				# TODO: remove redundancy
+			value = @coerce.call(value)
 
- 				value = @coerce.call(value)
-
-				@isa.call( value )
+			@isa.call( value )
+			unless value_from_default
 				@trigger.call(object, value)
-				object.instance_variable_set inst_variable_name, value
+			end
 			
-			else
-
-				object.send( @writter, value )
-				
-			end	
+			object.instance_variable_set inst_variable_name, value
+			
 		end
 		
 		def generate_getter

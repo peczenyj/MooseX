@@ -644,6 +644,14 @@ class TriggerTest
 		trigger: :my_method,
 	}
 
+	has attr_with_default: {
+		is: :rw,
+		trigger: lambda do |object, new_value| 
+			object.logger.log "will update attr_with_trigger with new value #{new_value}"
+		end,
+		default: 1,
+	}
+
 	has attr_lazy_trigger: {
 		is: :lazy,
 		trigger: :my_method,
@@ -668,6 +676,20 @@ describe "TriggerTest" do
 		log.should_receive(:log)
 		t = TriggerTest.new(attr_with_trigger_ro: 1, logger: log)
 
+	end
+
+	it "should NOT call trigger on constructor (with default)" do
+		log = double
+		log.should_not_receive(:log)
+		t = TriggerTest.new(logger: log)
+	end
+
+	it "should NOT call trigger on constructor (with default)" do
+		log = double
+		log.should_receive(:log)
+		t = TriggerTest.new(logger: log)
+		
+		t.attr_with_default = 1
 	end
 
 	it "should call trigger on setter" do
