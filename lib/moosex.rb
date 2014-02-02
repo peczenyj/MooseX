@@ -94,8 +94,10 @@ module MooseX
 			clearer: false,
 			required: false, 
 			predicate: false,
-			isa: lambda { |x| true },
+			isa: lambda { |value| true },
 			handles: {},
+			trigger: lambda {|object,value|},  # TODO: implement
+			coerce: lambda {|object| object},  # TODO: implement
 		}
 
 		REQUIRED = [ :is ]
@@ -218,6 +220,26 @@ module MooseX
 			init_arg: lambda do |init_arg, field_name|
 				init_arg.to_sym
 			end,
+			trigger: lambda do |trigger, field_name|
+				unless trigger.is_a? Proc
+					trigger_method_name = trigger.to_sym
+					trigger = lambda do |object|
+						object.send(trigger_method_name)
+					end
+				end
+
+				trigger				
+			end,
+			coerce: lambda do |coerce, field_name|
+				unless coerce.is_a? Proc
+					coerce_method_name = coerce.to_sym
+					coerce = lambda do |object|
+						object.send(coerce_method_name)
+					end
+				end
+
+				coerce				
+			end,
 		};
 
 		def initialize(a, o)
@@ -267,6 +289,8 @@ module MooseX
 			@writter     = o[:writter]
 			@builder     = o[:builder]
 			@init_arg    = o[:init_arg]
+			@trigger     = o[:trigger]
+			@coerce      = o[:coerce]
 		end
 		
 		def init(object, args)
@@ -309,8 +333,9 @@ module MooseX
 
  				# TODO: remove redundancy
 
-				type_check = @isa
-				type_check.call(value)
+ 				value = @coerce.call(value)
+
+				@isa.call( value )
 
 				object.instance_variable_set inst_variable_name, value
 			
@@ -329,11 +354,12 @@ module MooseX
 
 			if @lazy
 				type_check = @isa
-
+				coerce     = @coerce
 				before_get = lambda do |object|
 					return if object.instance_variable_defined? inst_variable_name
 
 					value = builder.call(object)
+					value = coerce.call(value)
 					type_check.call(value)
 
 					object.instance_variable_set(inst_variable_name, value)					
@@ -348,8 +374,10 @@ module MooseX
 		
 		def generate_setter
 			inst_variable_name = "@#{@attr_symbol}".to_sym
+			coerce     = @coerce
 			type_check = @isa
 			Proc.new  do |value| 
+				value = coerce.call(value)
 				type_check.call(value)
 				instance_variable_set inst_variable_name, value
 			end
