@@ -214,7 +214,10 @@ module MooseX
 				end
 
 				builder
-			end,		
+			end,
+			init_arg: lambda do |init_arg, field_name|
+				init_arg.to_sym
+			end,
 		};
 
 		def initialize(a, o)
@@ -224,6 +227,7 @@ module MooseX
 				reader: a,
 				writter: a.to_s.concat("=").to_sym,
 			  builder: "build_#{a}".to_sym,
+			  init_arg: a,
 			}).merge(o)
 
 			REQUIRED.each { |field| 
@@ -262,6 +266,7 @@ module MooseX
 			@reader      = o[:reader]
 			@writter     = o[:writter]
 			@builder     = o[:builder]
+			@init_arg    = o[:init_arg]
 		end
 		
 		def init(object, args)
@@ -290,8 +295,8 @@ module MooseX
 				end
 			end
 
-			if args.has_key? @attr_symbol
-				value = args[ @attr_symbol ]
+			if args.has_key? @init_arg
+				value = args[ @init_arg ]
 			elsif @default
 				value = @default.call
 			elsif @required

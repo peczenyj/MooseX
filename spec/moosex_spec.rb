@@ -78,6 +78,11 @@ class Foo
       is: :rwp,       # read-write-private (private setter)
       required: true, # you should require in the constructor 
     }
+
+    has my_other_bar: {
+    	is: :rw,
+    	init_arg: :bar2
+    }
 end
 
 describe "Foo" do
@@ -97,6 +102,11 @@ describe "Foo" do
 		expect {
 			foo.bar = 1024
 		}.to raise_error(NoMethodError)
+	end
+
+	it "should be possible initialize my_other_bar by bar2" do
+		foo = Foo.new( bar: 1, bar2: 555)
+		foo.my_other_bar.should == 555
 	end
 end 
 
@@ -462,7 +472,13 @@ class LazyFox
 		builder: lambda{ |object| object.something }
 	}
 
-	# FIXME !!!
+	has lazy_with_default: {
+		is: :lazy,
+		default: 10,
+		clearer: true,
+		builder: lambda {|o| 1 },
+	}
+
 	has last_lazy_attr: {
 		is: :rw,
 		lazy: true,
@@ -537,4 +553,26 @@ describe "LazyFox" do
 		l = LazyFox.new(something: 2)
 		l.lazy_attr_who_accepts_lambda.should == 2
 	end	
+
+	it "lazy_with_default should be initialize with default value" do
+		l = LazyFox.new
+		l.lazy_with_default.should == 10
+		l.reset_lazy_with_default!
+		l.lazy_with_default.should == 1
+	end
+
+	it "last_lazy_attr will raise error without a builder" do
+		l = LazyFox.new
+		expect {
+			l.last_lazy_attr
+		}.to raise_error(NoMethodError)
+	end
+
+	it "last_lazy_attr will not raise error with a builder" do
+		l = LazyFox.new
+		def l.build_last_lazy_attr
+			0
+		end
+		l.last_lazy_attr.should be_zero
+	end
 end
