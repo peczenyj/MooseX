@@ -18,9 +18,14 @@ module MooseX
 		end
 
 		def initialize(args={})
+			args = BUILDARGS(args)
 
 			self.class.__meta().init(self, args)
 
+		end
+
+		def BUILDARGS(args)
+			args
 		end
 
 		def c.inherited(subclass)
@@ -244,7 +249,6 @@ module MooseX
 
 		def initialize(a, o)
 			# todo extract this to a framework, see issue #21 on facebook
-
 			o = DEFAULTS.merge({
 				reader: a,
 				writter: a.to_s.concat("=").to_sym,

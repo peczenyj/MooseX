@@ -688,7 +688,7 @@ describe "TriggerTest" do
 		log = double
 		log.should_receive(:log)
 		t = TriggerTest.new(logger: log)
-		
+
 		t.attr_with_default = 1
 	end
 
@@ -707,4 +707,27 @@ describe "TriggerTest" do
 		
 		t.attr_lazy_trigger.should == 1
 	end	
+end
+
+class BuildArgsExample 
+	include MooseX
+
+	has [:x, :y], {
+		is: :rw,
+		required: true,
+	}
+
+	def BUILDARGS(args)
+		args[:x] = 1024
+		args[:y] = - args[:y]
+		args
+	end
+end
+
+describe "BuildArgsExample" do
+	it "should create the object" do
+		ex = BuildArgsExample.new(x: 10, y: -2)
+		ex.x.should == 1024
+		ex.y.should == 2
+	end
 end
