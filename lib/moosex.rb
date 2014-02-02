@@ -22,10 +22,14 @@ module MooseX
 
 			self.class.__meta().init(self, args)
 
+			BUILD()
 		end
 
 		def BUILDARGS(args)
 			args
+		end
+
+		def BUILD
 		end
 
 		def c.inherited(subclass)
