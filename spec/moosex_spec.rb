@@ -14,10 +14,22 @@ class Point
 		isa: Integer,
 		default: lambda { 0 }, # you should specify a lambda
 	}
-
+	
+	has secret: {
+		is: :private,
+	}
+ 	
 	def clear 
 		self.x= 0        # to run with type-check you must
 		self.y= 0        # use the setter instad @x=
+	end
+
+  def change_secret(new_secret)
+		self.secret= new_secret
+	end
+
+	def show_secret
+		secret
 	end
 end 
 
@@ -40,6 +52,29 @@ describe "Point" do
 			p.x.should == 5
 			p.y.should == 4
 		end
+  end
+
+  describe "private accessors" do		
+		it "should change private by method" do
+			p = Point.new(secret: 1)
+			p.show_secret.should == 1
+			p.change_secret(2)
+			p.show_secret.should == 2
+		end
+		
+		it "cant read secret" do
+			p = Point.new
+			expect {
+				p.secret
+			}.to raise_error(NoMethodError)
+		end
+		
+		it "cant write secret" do
+			p = Point.new
+			expect {
+				p.secret = 1
+			}.to raise_error(NoMethodError)
+		end		
 	end
 	
 	describe "should create a getter and a setter" do

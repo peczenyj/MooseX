@@ -78,8 +78,11 @@ module MooseX
 					define_method method, &proc
 				end
 
-	 			if attr.is.eql? :rwp
+	 			if attr.is.eql?(:rwp) 
 					private attr.writter
+				elsif attr.is.eql?(:private)
+					private attr.writter
+					private attr.reader
 				end
 
 				__meta.add(attr)
@@ -105,8 +108,8 @@ module MooseX
 
 		VALIDATE = {
 			is: lambda do |is, field_name| 
-				unless [:rw, :rwp, :ro, :lazy].include?(is)
-					raise "invalid value for field '#{field_name}' is '#{is}', must be one of :rw, :rwp, :ro or :lazy"  
+				unless [:rw, :rwp, :ro, :lazy, :private].include?(is)
+					raise "invalid value for field '#{field_name}' is '#{is}', must be one of :private, :rw, :rwp, :ro or :lazy"  
 				end
 			end,
 		};
