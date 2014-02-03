@@ -153,6 +153,18 @@ or
   default: lambda{ MyObject.new },
 ```
 
+### required
+
+if true, the constructor will raise error if this attribute was not present.
+
+```ruby
+  required: true,
+```
+
+if this attribute has a default value, we will initialize with this value and no exception will be raised.
+
+Optional.
+
 ### coerce
 
 You can try to coerce the attribute value by a lambda before the type check phase. For example you can do
