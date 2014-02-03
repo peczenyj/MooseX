@@ -53,7 +53,7 @@ class Baz
   has boom: {
     is: :rw,
         predicate: true,     # add has_boom? method, ask if the attribute is unset
-        clearer: true,       # add reset_boom! method, unset the attribute
+        clearer: true,       # add clear_boom! method, unset the attribute
   }
 end
 

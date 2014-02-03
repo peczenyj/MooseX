@@ -124,7 +124,7 @@ class Baz
 	has boom: {
 		is: :rw,
     predicate: true,     # add has_boom? method, ask if the attribute is unset
-    clearer: true,       # add reset_boom! method, unset the attribute
+    clearer: true,       # add clear_boom! method, unset the attribute
 	}
 end
 
@@ -147,6 +147,20 @@ describe "Baz" do
 		}.to raise_error(/bam should be less than 100/)
 	end
 
+	it "should inject methods in the class (predicate)" do
+		baz = Baz.new( bam: 99 )
+		
+		baz.respond_to?(:has_boom?).should be_true
+		Baz.instance_methods.member?(:has_boom?).should be_true	
+	end
+	
+	it "should inject methods in the class (clearer)" do
+		baz = Baz.new( bam: 99 )
+		
+		baz.respond_to?(:clear_boom!).should be_true
+		Baz.instance_methods.member?(:clear_boom!).should be_true			
+	end
+
 	it "rw acessor should has nil value, supports predicate" do
 		baz = Baz.new( bam: 99 )
 		
@@ -163,7 +177,7 @@ describe "Baz" do
 		baz.has_boom?.should be_true
 		baz.boom.should be_zero
 		
-		baz.reset_boom!
+		baz.clear_boom!
 
 		baz.has_boom?.should be_false
 		baz.boom.should be_nil
@@ -172,8 +186,8 @@ describe "Baz" do
 	it "should be possible call the clearer twice" do
 		baz = Baz.new( bam: 99, boom: 0 )
 		
-		baz.reset_boom!
-		baz.reset_boom!
+		baz.clear_boom!
+		baz.clear_boom!
 		
 		baz.has_boom?.should be_false
 		baz.boom.should be_nil
@@ -257,6 +271,13 @@ describe "ProxyToTarget" do
 		p.target.method_y(1,2,3).should == 6
 		p.my_method_y(1,2,3).should == 6
 	end	
+	
+	it "should inject method_y" do
+		p = ProxyToTarget.new
+		
+		p.respond_to?(:my_method_y).should be_true
+		ProxyToTarget.instance_methods.member?(:my_method_y).should be_true
+	end
 end
 
 class ProxyToTargetUsingArrayOfMethods
@@ -529,7 +550,7 @@ describe "LazyFox" do
 
 		l.has_other_thing?.should be_true
 
-		l.reset_other_thing!
+		l.clear_other_thing!
 
 		l.has_other_thing?.should be_false 
 
@@ -557,7 +578,7 @@ describe "LazyFox" do
 	it "lazy_with_default should be initialize with default value" do
 		l = LazyFox.new
 		l.lazy_with_default.should == 10
-		l.reset_lazy_with_default!
+		l.clear_lazy_with_default!
 		l.lazy_with_default.should == 1
 	end
 

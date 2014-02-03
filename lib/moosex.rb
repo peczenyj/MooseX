@@ -74,19 +74,11 @@ module MooseX
 
 				attr = MooseX::Attribute.new(attr_name, attr_options)
 
-				g = attr.generate_getter
-				
-	    	define_method attr.reader, &g
-	 
-	 			s = attr.generate_setter
-	 		
-	 			case attr.is 
-	 			when :rw 				
-					define_method attr.writter, &s
-				
-				when :rwp
-					define_method attr.writter, &s
-					
+				attr.methods.each_pair do |method, proc|
+					define_method method, &proc
+				end
+
+	 			if attr.is.eql? :rwp
 					private attr.writter
 				end
 
@@ -97,7 +89,7 @@ module MooseX
 	
 	class Attribute
 
-		attr_reader :attr_symbol, :is, :reader, :writter, :lazy, :builder
+		attr_reader :attr_symbol, :is, :reader, :writter, :lazy, :builder, :methods
 		DEFAULTS= { 
 			lazy: false,
 			clearer: false,
@@ -161,7 +153,7 @@ module MooseX
 				if ! clearer
 					return false
 				elsif clearer.is_a? TrueClass
-					return "reset_#{field_name}!".to_sym
+					return "clear_#{field_name}!".to_sym
 				end
 		
 				begin
@@ -276,13 +268,16 @@ module MooseX
 				validate.call(o[field], a)
 			end
 
-			if o[:is].eql? :lazy
+			if o[:is].eql? :ro	
+				o[:writter] = nil
+			elsif o[:is].eql? :lazy
 				o[:lazy] = true
+				o[:writter] = nil
 			end
 
 			unless o[:lazy]
 				o[:builder] = nil
-			end	
+			end
 
 			@attr_symbol = a
 			@is          = o[:is]
@@ -299,35 +294,42 @@ module MooseX
 			@init_arg    = o[:init_arg]
 			@trigger     = o[:trigger]
 			@coerce      = o[:coerce]
-		end
-		
-		def init(object, args)
-			inst_variable_name = "@#{@attr_symbol}".to_sym
-			
-			value  = nil
+			@methods     = {}
 
-			attr_symbol = @attr_symbol
-			@handles.each_pair do | method, target_method |
-				object.define_singleton_method method do |*args|
-					self.send(attr_symbol).send(target_method, *args)
-				end
+			if @reader 
+				@methods[@reader] = generate_reader
 			end
-
+			
+			if @writter 
+				@methods[@writter] = generate_writter
+			end
+			inst_variable_name = "@#{@attr_symbol}".to_sym
 			if @predicate
-				object.define_singleton_method @predicate do
+				@methods[@predicate] = Proc.new do
 					instance_variable_defined? inst_variable_name
 				end
 			end
 
 			if @clearer
-				object.define_singleton_method @clearer do
+				@methods[@clearer] = Proc.new do
 					if instance_variable_defined? inst_variable_name
 						remove_instance_variable inst_variable_name
 					end
 				end
 			end
-
+			
+			attr_symbol = @attr_symbol
+			@handles.each_pair do | method, target_method |
+				@methods[method] = Proc.new do |*args|
+					self.send(attr_symbol).send(target_method, *args)
+				end
+			end			
+		end
+		
+		def init(object, args)
+			value  = nil
 			value_from_default = false
+			
 			if args.has_key? @init_arg
 				value = args[ @init_arg ]
 			elsif @default
@@ -347,11 +349,11 @@ module MooseX
 				@trigger.call(object, value)
 			end
 			
+			inst_variable_name = "@#{@attr_symbol}".to_sym
 			object.instance_variable_set inst_variable_name, value
-			
 		end
 		
-		def generate_getter
+		def generate_reader
 			inst_variable_name = "@#{@attr_symbol}".to_sym
 			
 			builder    = @builder
@@ -378,7 +380,7 @@ module MooseX
 			end
 		end
 		
-		def generate_setter
+		def generate_writter
 			inst_variable_name = "@#{@attr_symbol}".to_sym
 			coerce     = @coerce
 			type_check = @isa
