@@ -17,16 +17,16 @@ module MooseX
 			define_singleton_method(:__meta) { meta }
 		end
 
-		def initialize(args={})
-			args = BUILDARGS(args)
-
-			self.class.__meta().init(self, args)
+		def initialize(*args)	
+			args = BUILDARGS(*args)
+			
+			self.class.__meta().init(self, args || {})
 
 			BUILD()
 		end
 
-		def BUILDARGS(args)
-			args
+		def BUILDARGS(*args)
+			args[0]
 		end
 
 		def BUILD
