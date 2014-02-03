@@ -283,7 +283,7 @@ class Foo
     is: :rw,
     writter: :x=,
     reader: :x,
-    init_art: :x,
+    init_arg: :x,
   }
 end
 
