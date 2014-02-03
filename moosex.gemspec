@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Moosex::VERSION
   spec.authors       = ["Tiago Peczenyj"]
   spec.email         = ["tiago.peczenyj@gmail.com"]
-  spec.summary       = %q{A postmodern object system for Ruby}
-  spec.description   = %q{MooseX is an extension of Ruby object system. The main goal of MooseX is to make Ruby Object Oriented programming easier, more consistent, and less tedious. With MooseX you can think more about what you want to do and less about the mechanics of OOP. It is a port of Moose/Moo from Perl to Ruby world.}
+  spec.summary       = %q{A postmodern object DSL for Ruby}
+  spec.description   = %q{MooseX is an extension of Ruby object DSL. The main goal of MooseX is to make Ruby Object Oriented programming easier, more consistent, and less tedious. With MooseX you can think more about what you want to do and less about the mechanics of OOP. It is a port of Moose/Moo from Perl to Ruby world.}
   spec.homepage      = "http://github.com/peczenyj/MooseX"
   spec.license       = "MIT"
 

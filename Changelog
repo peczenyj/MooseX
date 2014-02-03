@@ -1,3 +1,4 @@
+	- improve readme #20
     - BUILDARGS should accept different signatures #36
     - clearer create by default clear_#{attr_name}! public method
     - add attr :private #35

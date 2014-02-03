@@ -1,6 +1,6 @@
 # MooseX
 
-A postmodern object system for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX)
+A postmodern object DSL for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX)
 
 THIS MODULE IS EXPERIMENTAL YET! BE CAREFUL!
 
@@ -24,113 +24,20 @@ class Point
     default: lambda { 0 }, # you should specify a lambda
   }
 
-  def clear 
-    self.x= 0    # to run with type-check you must
-    self.y= 0    # use the setter instad @x=
-  end
-end
-
-class Foo
-    include MooseX
-
-    has bar: {  
-        is: :rwp,            # read-write-private (private setter) 
-        required: true,      # you should require in the constructor 
-    }
-end
-
-class Baz
-    include MooseX
-
-    has bam: {
-        is: :ro,             # read-only, you should specify in new only
-        isa: lambda do |bam| # you should add your own validator
-            raise 'bam should be less than 100' if bam > 100
-        end,
-        required: true,
-    }
-
-  has boom: {
-    is: :rw,
-        predicate: true,     # add has_boom? method, ask if the attribute is unset
-        clearer: true,       # add clear_boom! method, unset the attribute
-  }
-end
-
-class Lol 
-    include MooseX
-
-    has [:a, :b], {          # define attributes a and b
-        is: :ro,             # with same set of properties
-        default: 0,      
-    }
-
-    has c: {                 # alternative syntax to be 
-        is: :ro,             # more similar to Moo/Moose    
-        default: 1,
-        predicate: :can_haz_c?,     # custom predicate
-        clearer: "desintegrate_c",  # force coerce to symbol
-    }
-
-  has [:d, :e] => {
-    is: "ro",                # can coerce from strings
-    default: 2,   
-  }    
-end    
-
-class Proxy
-  include MooseX
-
-  has target: {
-    is:  :ro,
-    default: lambda { Target.new }, # default, new instace of Target
-    handles: {                      # handles is for delegation,
-      my_method_x: :method_x,       # inject methods with new names 
-      my_method_y: :method_y,       # old => obj.target.method_x
-    },                              # now => obj.my_method_x
-  }
-end
-
-class Target 
-  def method_x; 1024; end             # works with simple methods
-  def method_y(a,b,c); a + b + c; end # or methods with arguments
-end
-
-class Point3D < Point
-
-  has x: {        # override original attr!
-    is: :rw,
-    isa: Integer,
-    default: 1,
-  }
-  
-  has z: {
-    is: :rw,      # read-write (mandatory)
-    isa: Integer, # should be Integer
-    default: 0,   # default value is 0 (constant)
-  }
-
-  has color: {
-    is: :rw,      # you should specify the reader/writter
-    reader: :what_is_the_color_of_this_point,
-    writter: :set_the_color_of_this_point,
-    default: :red,
-  }
-
-  def clear 
+  def clear! 
     self.x= 0      # to run with type-check you must
     self.y= 0      # use the setter instad @x=
-    self.z= 0
   end
+
+  def to_s
+    "Point[x=#{self.x}, y=#{self.y}]"
+  end 
 end 
 
 # now you have a generic constructor
 p1  = Point.new                       # x and y will be 0
 p2  = Point.new( x:  5 )              # y will be 0
 p3  = Point.new( x:  5, y: 4)
-foo = Foo.new( bar: 123 )             # without bar will raise exception
-baz = Baz.new( bam: 99 )              # if bam > 100 will raise exception
-Proxy.new.my_method_x                 # will call method_x in target, return 1024
 ```
     
 ## Installation
@@ -161,42 +68,10 @@ It is fun
 
 ## Usage
 
-When you incluse the MooseX module in your class you can declare your attributes. The module provides a new constructor for you, you should not define 'initialize' anymore.
+You just need include the MooseX module in your class and start to describe the attributes with our DSL. This module will inject one smart constructor, acessor and other necessary methods.
 
+Instead the normal way of add accessors, constructor, validation, etc
 
-```ruby
-require 'moosex'
-
-class Point
-  include MooseX
-
-  has x: {
-    is: :rw,           # read-write (mandatory)
-    isa: Integer,      # should be Integer
-    default: 0,        # default value is 0 (constant)
-    required: false,   # if true, will be required in the constructor
-    predicate: false,  # if true, add has_x? method
-    clearer: false,    # if true, add clear_x! method 
-    handles: [ :to_s ],# used for method delegation  
-  }
-  ...
-end
-```
-
-in this example we add the attribute x, with read-write acessors, a default value and a type check.
-
-```ruby
-p1 = Point.new          # x will be initialize with 0 (default)
-p2 = Point.new(x: 50)   # initialize x in the constructur
-p3 = Point.new(x: "50") # will raise exception
-p1.x = "lol"            # will raise too
-```
-
-to use the type check feature you must use the writter method for the attribute.
-
-### Advantages
-
-instead
 ```ruby
 class Foo
   attr_accessor :bar, :baz, :bam
@@ -211,7 +86,8 @@ class Foo
   end
 end
 ```
-you can
+you can do this:
+
 ```ruby
 class Foo
   include MooseX
@@ -223,77 +99,313 @@ class Foo
   }
 end
 ``` 
-instead
-```ruby
-class Proxy
-  def initialize(target)
-    @target=target
-  end
 
-  def method_x(a,b,c)
-    @target.method_x(a,b,c)
-  end
-  def method_y(a,b,c)
-    @target.method_y(a,b,c)
-  end 
-end
-```
-you can
+## DSL: the 'has' method
+
+The key of the DSL is the 'has' method injected in your class. You should use this method do describe your class and define the behavior like this:
+
 ```ruby
-class Proxy
+has :attribute_name, { hash of properties }
+```
+
+to describe one new attribute you shoud specify some properties inside a Hash. The only mandatory property is the ':is', to specify how we should create the acessors (if public or private).
+
+The options for "has" are as follows:
+
+### is
+
+**Required**, may be :ro, :rw, :rwp, :private or :lazy.
+
+"ro" specify a read-only attribute - generate only the reader method - you should specify the value in the constructor or using "default".
+
+"rw" specify a read-write attribute - generate both reader and writter methods.
+
+"rwp" specify a read-write private attribute. Similar to "rw" but the writter is a private method.
+
+"private" will generate both reader and writter as private methods
+
+"lazy" similar to "ro", but also sets "lazy" to true and "builder" to "build_#{attribute_name}".
+
+### isa
+
+You can specify an optional type check for the attribute. Accepts a lambda, and it must raise one exception if the type check fails. If you provides a Class or Module, we will call the 'is_a?' method in the new value againt the Class/Module. We call the type check routine on the constructor and in each call of the writter method.
+
+You can specify your own kind of type validation.
+```ruby
+    isa: lambda do |new_value|
+      unless new_value.respond_to? :to_sym
+        raise "bar should respond to to_sym method!"
+      end
+    end,
+end
+``` 
+
+Important: if you access the attribute instance name using @attribute_name= you loose the type check feature. You need always set/get the attribute value using the acessors generated by MooseX.
+
+### default
+
+You can specify an optional default value to one attribute. If we don't specify in the constructor, we will initialize the attribute with this value. You also can specify one lambda to force object creation.
+
+```ruby
+  default: 0,
+```
+or
+```ruby
+  default: lambda{ MyObject.new },
+```
+
+### coerce
+
+You can try to coerce the attribute value by a lambda before the type check phase. For example you can do
+
+```ruby
+  coerce: lambda{ |new_value| new_value.to_i },
+```
+
+to force a convertion to integer. Or flatten one array, convert to symbol, etc. Optional.
+
+### handles
+
+One of the greatest features in MooseX: you can inject methods and delegate the method calling to the attribute. For example, instead do this:
+
+```ruby
+  def some_method(a,b,c)
+    @attribute.some_method(a,b,c)
+  end
+```
+
+you simply specify one or more methods to inject.
+```ruby
+  handles: [:some_method],
+```
+If you specify one Module or Class, we will handle all public instance methods defined in that Module or Class ( if Class, we will consider all methods except the methods declared in the superclass). The only limitation is BasicObject (forbidden).
+
+If you need rename the method, you can specify a Hash:
+```ruby
+  handles: {
+    my_method_1: :method1,
+    my_method_2: :method2,
+  },
+```
+
+Optional.
+
+### trigger
+
+You can specify one lambda or method name to be executed in each writter ( if coerce and type check does not raise any exception ). The trigger will be called in each setter and in the constructor if we do not use the default value. Useful to add a logging operation or some complex validation.
+
+```ruby
+  trigger: lambda {|object, new_value| object.logger.log "change the attribute value to #{new_value}" }
+```
+or
+```ruby
+has a: { is: :rw }
+has b: {
+  is: :rw,
+  trigger: :verify_if_a_and_b_are_different,
+  }
+...
+  def verify_if_a_and_b_are_different(new_value_of_b)
+    if self.a.eql? new_value_of_b
+      raise "a and b should be different!"
+    end
+  end
+```
+
+Optional.
+
+### writter
+
+You can specify the name of the attribute acessor, default is "#{attribute_name}=".
+
+### reader
+
+You can specify the name of the attribute acessor, default is "attribute_name".
+
+### predicate
+
+Creates a method who returns a boolean value if the attribute is defined. If true, will create one public "has_#{attribute_name}?" method by default.
+
+For example 
+```ruby
+class Foo
   include MooseX
 
-  has :target, {
-    is: :ro,
-    handles => [ :method_x, :method_y ]
-  }
-end
-```
-and much more
-
-## Lazy Attributes
-
-```ruby
-class LazyFox
-  include MooseX
-
-  has something: {
-    is: :lazy
-  }
-
-  has other_thing: {
+  has x: {
     is: :rw,
-    lazy: true,
+    predicate: true,
+  }
+end
+
+foo = Foo.new
+foo.has_x?     # returns false
+foo.x= 10
+foo.has_x?     # returns true
+```
+Important: nil is different than undefined. If you do not initialize one attribute, you will receive one 'nil' if you try to fetch the value, but the state of this attribute is 'undefined'. If you set any value (even nil), the attribute will be considered 'defined' and the predicate will return true.
+
+Optional.
+
+### clearer
+
+Creates a method who will unset the attribute. If true, will create one public "clear_#{attribute_name}!" method by default. Unset in this case is not 'nil', we will remove the instance variable. For example:
+
+```ruby
+class Foo
+  include MooseX
+
+  has x: {
+    is: :rw,
     predicate: true,
     clearer: true,
-    builder: :my_build_other_thing,
+  }
+end
+
+foo = Foo.new
+foo.has_x?     # returns false
+foo.x= 10
+foo.has_x?     # returns true
+foo.clear_x!   # will unset the attribute x
+foo.has_x?     # returns false
+```
+Optional.
+
+### init_arg
+
+You can rename the attribute name in the constructor. For example:
+
+```ruby
+class Foo
+  include MooseX
+
+  has secret: {
+    is: :rw,
+    writter: :x=,
+    reader: :x,
+    init_art: :x,
+  }
+end
+
+foo = Foo.new(x: 1)  # specify the value of secret in the constructor
+foo.x                # return 1 
+foo.x= 2             # will set 'secret' to 2
+```
+
+### lazy
+
+Another great feature: lazy attributes. If you this to true, we will wait until the first reader accessor be called to create the object using the builder method, then store the value. For example:
+
+```ruby
+class Foo
+  include MooseX
+
+  has x: {
+    is: :rw,
+    lazy: :true,
+    predicate: true,  # predicate and clearer are just
+    clearer: true,    # to show a better example
   }
 
-  has lazy_attr_who_accepts_lambda: {
-    is: :lazy,
-    builder: lambda{ |object|  object.something }
-  }
-
-  def build_something
-    1024
-  end
-
-  private 
-  def my_build_other_thing
-    128
+  def builder_x
+    Some::Class.new
   end
 end
+
+foo = Foo.new  # normal...
+foo.has_x?     # returns false
+foo.x          # will call the builder_x method and store the value
+foo.has_x?     # returns true
+foo.x          # returns the stored value
+foo.clear_x!   # will unset the attribute x
+foo.has_x?     # returns false
+foo.x          # will call the builder again and store the value
 ```
+A lazy attribute needs a builder method or lambda. By default you should implement the "builder_#{attribute_name}" method. Using lazy you should initialize one attribute when you really need.
+
+Optional.
+
+### builder
+
+You can specify the builder name if the attribute is lazy, or you can specity one lambda. If true, the default name of the builder will be "builder_#{attribute_name}". This attribute will be ignored if the attribute is not lazy.
+
+```ruby
+class Foo
+  include MooseX
+
+  has x: {
+    is: :rw,
+    lazy: :true,
+    builder: lambda{ |foo| Some::Class.new } # you can ignore foo, or use it!
+  }
+end
+```
+Optional.
+
+## BUILD
+
+If you need run some code after the creation of the object (like some extra validation), you should override the BUILD method.
+
+```ruby
+class BuildExample 
+  include MooseX
+
+  has [:x, :y], {
+    is: :rw,
+    required: true,
+  }
+  def BUILD
+    if self.x == self.y 
+      raise "invalid: you should use x != y"
+    end 
+  end
+end
+
+b1 = BuildExample.new(x: 1, y: 2) # will create the object 
+b2 = BuildExample.new(x: 1, y: 1) # will raise the exception!
+```ruby
+
+### BUILDARGS
+
+If you need manupulate the constructor argument list, you should implement the method BUILDARGS. You MUST return one Hash of attribute_name => value.
+
+```ruby
+class BuildArgsExample2 
+  include MooseX
+
+  has [:x, :y], {
+    is: :rw,
+    required: true,
+  }
+
+  def BUILDARGS(x=4,y=8)
+    args = {}
+    args[:x] = x
+    args[:y] = y
+    
+    args
+  end
+end
+
+ex1 = BuildArgsExample2.new(1,2) # x == 1, y == 2
+ex2 = BuildArgsExample2.new(1)   # x == 1, y == 8
+ex3 = BuildArgsExample2.new()    # x == 4, y == 8
+```
+
+## IMPORTANT
+
+This module is experimental. I should test more and more to be possible consider this "production ready". If you find some issue/bug please add here: https://github.com/peczenyj/MooseX/issues
+
+Until the first 0.1 version I can change anything without warning.
+
+I am open to suggestions too.
 
 ## TODO
 
-1. Support to lazy attributes [done]
-2. Support to BUILD and BUILDARGS hook
-3. Support to Roles ( it is a Module on Steroids )
-4. Support to after/before/around 
-5. Improve the typecheck system (we should specify: we need an array of positive integers)
-6. Improve the exception and warning system
-7. Profit!
+1. Support to Roles ( it is a Module on Steroids )
+2. Support to after/before/around 
+3. Improve the typecheck system (we should specify: we need an array of positive integers)
+4. Improve the exception and warning system
+5. Profit!
 
 ## Limitations
 

@@ -1,8 +1,10 @@
 # Module MooseX
-# A postmodern object system for Ruby
+# A postmodern object DSL for Ruby
 #
-# MooseX is an extension of Ruby object system. The main goal of MooseX is to make Ruby Object Oriented programming easier, more consistent, and less tedious. With MooseX you can think more about what you want to do and less about the mechanics of OOP. It is a port of Moose/Moo from Perl to Ruby world.
-
+# Author::    Tiago Peczenyj  (mailto:tiago.peczenyj@gmail.com)
+# Copyright:: Copyright (c) 2014 Tiago Peczenyj
+# License::   MIT
+#
 require "moosex/version"
 
 module MooseX
@@ -247,6 +249,7 @@ module MooseX
 		};
 
 		def initialize(a, o)
+			#o ||= {}
 			# todo extract this to a framework, see issue #21 on facebook
 			o = DEFAULTS.merge({
 				reader: a,
@@ -355,7 +358,8 @@ module MooseX
 			inst_variable_name = "@#{@attr_symbol}".to_sym
 			object.instance_variable_set inst_variable_name, value
 		end
-		
+
+		private
 		def generate_reader
 			inst_variable_name = "@#{@attr_symbol}".to_sym
 			
