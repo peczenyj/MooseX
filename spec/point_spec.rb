@@ -1,4 +1,5 @@
 require 'moosex'
+require 'moosex/types'
 
 class Point
 	include MooseX
@@ -88,13 +89,15 @@ describe "Point" do
 			p = Point.new
 			expect { 
 				p.x = "lol" 
-			}.to raise_error('isa check for "x" failed: is not instance of Integer!')
+			}.to raise_error(MooseX::Types::TypeCheckException,
+				"isa check for x=: Type violation: value 'lol' (String) is not an instance of [Type Integer]")
 		end	
 		
 		it "for x, with type check" do			
 			expect { 
 				Point.new(x: "lol") 
-			}.to raise_error('isa check for "x" failed: is not instance of Integer!')
+			}.to raise_error(MooseX::Types::TypeCheckException,
+				"isa check for field x: Type violation: value 'lol' (String) is not an instance of [Type Integer]")
 		end	
 
 		it "clear should clean attributes" do
@@ -172,13 +175,15 @@ describe "Point3D" do
 			p = Point3D.new
 			expect { 
 				p.z = "lol" 
-			}.to raise_error('isa check for "z" failed: is not instance of Integer!')
+			}.to raise_error(MooseX::Types::TypeCheckException,
+				"isa check for z=: Type violation: value 'lol' (String) is not an instance of [Type Integer]")
 		end	
 		
 		it "for z, with type check" do			
 			expect { 
 				Point3D.new(z: "lol") 
-			}.to raise_error('isa check for "z" failed: is not instance of Integer!')
+			}.to raise_error(MooseX::Types::TypeCheckException,
+				"isa check for field z: Type violation: value 'lol' (String) is not an instance of [Type Integer]")
 		end	
 
 		it "clear should clean attributes" do

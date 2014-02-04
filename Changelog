@@ -1,3 +1,6 @@
+
+	- improve type system via MooseX::Types #16
+	
 0.0.10 - 2014-02-03
 	- improve readme #2014-02-01
     - BUILDARGS should accept different signatures #36

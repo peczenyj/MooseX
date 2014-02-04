@@ -5,7 +5,7 @@ require 'moosex/version'
 
 Gem::Specification.new do |spec|	
   spec.name          = "moosex"
-  spec.version       = Moosex::VERSION
+  spec.version       = MooseX::VERSION
   spec.authors       = ["Tiago Peczenyj"]
   spec.email         = ["tiago.peczenyj@gmail.com"]
   spec.summary       = %q{A postmodern object DSL for Ruby}

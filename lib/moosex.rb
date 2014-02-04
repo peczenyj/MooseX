@@ -6,9 +6,10 @@
 # License::   MIT
 #
 require "moosex/version"
+require "moosex/types"
 
 module MooseX
-	
+
 	def MooseX.included(c)
 			
 		c.extend(MooseX::Core)
@@ -93,6 +94,7 @@ module MooseX
 	end	
 	
 	class Attribute
+		include MooseX::Types
 
 		attr_reader :attr_symbol, :is, :reader, :writter, :lazy, :builder, :methods
 		DEFAULTS= { 
@@ -100,7 +102,7 @@ module MooseX
 			clearer: false,
 			required: false, 
 			predicate: false,
-			isa: lambda { |value| true },
+			isa: isAny,
 			handles: {},
 			trigger: lambda {|object,value|},  # TODO: implement
 			coerce: lambda {|object| object},  # TODO: implement
@@ -121,13 +123,7 @@ module MooseX
 				is.to_sym 
 			end,
 			isa: lambda do |isa, field_name| 
-				return isa if isa.is_a? Proc
-				
-				return lambda do |new_value| 
-					unless new_value.is_a?(isa)
-						raise "isa check for \"#{field_name}\" failed: is not instance of #{isa}!" 
-					end 
-				end	 
+				isType(isa) 
 			end,
 			default: lambda do |default, field_name|
 				return default if default.is_a? Proc
@@ -346,15 +342,16 @@ module MooseX
 			else
 				return
 			end
- 
 
-			value = @coerce.call(value)
-
-			@isa.call( value )
+			value = @coerce.call(value) 	
+ 			begin
+				@isa.call( value )
+			rescue MooseX::Types::TypeCheckException => e
+				raise MooseX::Types::TypeCheckException, "isa check for field #{attr_symbol}: #{e}"
+			end
 			unless value_from_default
 				@trigger.call(object, value)
 			end
-			
 			inst_variable_name = "@#{@attr_symbol}".to_sym
 			object.instance_variable_set inst_variable_name, value
 		end
@@ -375,7 +372,12 @@ module MooseX
 
 					value = builder.call(object)
 					value = coerce.call(value)
-					type_check.call(value)
+					begin
+						type_check.call( value )
+					rescue MooseX::Types::TypeCheckException => e
+						raise MooseX::Types::TypeCheckException, "isa check for #{inst_variable_name} from builder: #{e}"
+					end
+
 					trigger.call(object, value)
 					object.instance_variable_set(inst_variable_name, value)					
 				end
@@ -388,13 +390,18 @@ module MooseX
 		end
 		
 		def generate_writter
+			writter_name       = @writter
 			inst_variable_name = "@#{@attr_symbol}".to_sym
 			coerce     = @coerce
 			type_check = @isa
 			trigger    = @trigger
 			Proc.new  do |value| 
 				value = coerce.call(value)
-				type_check.call(value)
+				begin
+					type_check.call( value )
+				rescue MooseX::Types::TypeCheckException => e
+					raise MooseX::Types::TypeCheckException, "isa check for #{writter_name}: #{e}"
+				end
 				trigger.call(self,value)
 				instance_variable_set inst_variable_name, value
 			end
