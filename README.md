@@ -422,15 +422,19 @@ The around hook is agressive: it will substitute the original method for a lambd
 
 it is useful to manipulate the return value if you need.
 
-## Types
+## MooseX::Types
 
-MooseX has a built-in type system to be helpful in many circunstances. How many times you need check if some argument is_a? Something? Or it respond_to? :some_method ? Now it is over. If you include the MooseX::Types module in your MooseX class you can use:
+MooseX has a built-in type system to be helpful in many circunstances. How many times you need check if some argument is_a? Something? Or it respond_to? :some_method ? Now it is over. If you include the **MooseX::Types** module in your MooseX class you can use:
 
 ### isAny
 
 will accept any type. Useful to combine with other types.
 
 ```ruby
+class Example
+  include MooseX
+  include MooseX::Types
+
   has x: { is: :rw, isa: isAny }
 ```
 
