@@ -1,3 +1,4 @@
+	- basic support to after/before/around #12
 	- improve exception #15
 	- improve type system via MooseX::Types #16
 	

@@ -39,7 +39,7 @@ module MooseX
 			subclass.class_exec do 
 				old_meta = subclass.__meta
 
-				meta = MooseX::Meta.new(old_meta.attrs)
+				meta = MooseX::Meta.new(old_meta)
 
 				define_singleton_method(:__meta) { meta }
 			end    		
@@ -48,22 +48,78 @@ module MooseX
 	end
 	
 	class Meta
-		attr_reader :attrs
-		def initialize(attrs=[])
-			@attrs = attrs.map{|att| att.clone }
+		attr_reader :attrs, :after, :before, :around
+
+		def initialize(old_meta=nil)
+			@attrs = []
+			@after = Hash.new {|hash, key| hash[key] = []}
+			@before= Hash.new {|hash, key| hash[key] = []}
+			@around= Hash.new {|hash, key| hash[key] = []}
+
+			if old_meta
+				@attrs = old_meta.attrs.map{|att| att.clone }
+				@after.merge! old_meta.after.clone
+				@before.merge! old_meta.before.clone
+				@around.merge! old_meta.around.clone
+			end
 		end
 		
 		def add(attr)
 			@attrs << attr
 		end
+
+		def add_after(method, block)
+			@after[method] << MooseX::Hook::After.new(method, block)
+		end
 		
+		def add_before(method, block)
+			@before[method]  << MooseX::Hook::Before.new(method, block)			
+		end
+
+		def add_around(method, block)
+			@around[method]  << MooseX::Hook::Around.new(method, block)			
+		end
+
 		def init(object, args)
 			@attrs.each{ |attr| attr.init(object, args) }
 		end
 	end	
 
 	module Core
-	
+		def after(method_name, &block)
+			method = instance_method method_name
+
+			define_method method_name do |*args|
+				result = method.bind(self).call(*args)
+				block.call(self,*args)
+				result
+			end
+
+			__meta.add_after(method_name, block)
+		end
+
+		def before(method_name, &block)
+			method = instance_method method_name
+
+			define_method method_name do |*args|
+				block.call(self,*args)
+				method.bind(self).call(*args)
+			end
+
+			__meta.add_before(method_name, block)
+		end
+
+		def around(method_name, &block)
+			method = instance_method method_name
+
+			define_method method_name do |*args|
+				
+				block.call(method, self,*args)
+				
+			end			
+			__meta.add_around(method, block)
+		end
+
 		def has(attr_name, attr_options = {})
 			if attr_name.is_a? Array 
 				attr_name.each do |attr| 
@@ -93,6 +149,25 @@ module MooseX
 		end
 	end	
 	
+	module Hook
+		class Base
+			attr_reader :method, :block
+			def initialize(method, block)
+				@method= method 
+				@block = block
+			end
+		end
+
+		class After < Base
+		end
+
+		class Before < Base
+		end
+
+		class Around < Base
+		end
+	end
+
 	class InvalidAttributeError < TypeError
 
 	end
