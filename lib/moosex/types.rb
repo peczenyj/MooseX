@@ -1,225 +1,225 @@
 module MooseX
   module Types
 
-  	def Types.included(c)
-  		c.extend(MooseX::Types::Core)
-  	end
+    def Types.included(c)
+      c.extend(MooseX::Types::Core)
+    end
 
-  	class TypeCheckError < TypeError
-  	end
+    class TypeCheckError < TypeError
+    end
 
-	  module Core 
+    module Core 
 
-	  	# TODO
-	  	# String 
-	  	# format
-	  	# length (min, max, between, is)
-	  	# add custom message
-	  	# integer / number odd, even, >=, <=, etc
-	  	# allow new/blank
-	  	# required :method?
+      # TODO
+      # String 
+      # format
+      # length (min, max, between, is)
+      # add custom message
+      # integer / number odd, even, >=, <=, etc
+      # allow new/blank
+      # required :method?
 
-	  	# Types::Numeric
-			# PositiveNum
-			# PositiveOrZeroNum
-			# PositiveInt
-			# PositiveOrZeroInt
-			# NegativeNum
-			# NegativeOrZeroNum
-			# NegativeInt
-			# NegativeOrZeroInt
-			# SingleDigit
+      # Types::Numeric
+      # PositiveNum
+      # PositiveOrZeroNum
+      # PositiveInt
+      # PositiveOrZeroInt
+      # NegativeNum
+      # NegativeOrZeroNum
+      # NegativeInt
+      # NegativeOrZeroInt
+      # SingleDigit
 
-	  	def createValidator(message, &block)
-	  		l = block
-	  		l.define_singleton_method(:to_s) { message }
-	  		l
-	  	end
+      def createValidator(message, &block)
+        l = block
+        l.define_singleton_method(:to_s) { message }
+        l
+      end
 
-	  	def isAny
-	  		createValidator("[Any]") {|value| }
-	  	end
+      def isAny
+        createValidator("[Any]") {|value| }
+      end
 
-	  	def isConstant(constant_value)
-	  		createValidator("[Constant: '#{constant_value}' (#{constant_value.class})]") do |value|
-	  			unless value === constant_value
-	  				raise TypeCheckError,"Constant violation: value '#{value}' (#{value.class}) is not '#{constant_value}' (#{constant_value.class})"
-	  			end	
-	  		end
-	  	end		  	
+      def isConstant(constant_value)
+        createValidator("[Constant: '#{constant_value}' (#{constant_value.class})]") do |value|
+          unless value === constant_value
+            raise TypeCheckError,"Constant violation: value '#{value}' (#{value.class}) is not '#{constant_value}' (#{constant_value.class})"
+          end 
+        end
+      end       
 
-	  	def isType(type)
-	  		return type if type.is_a?(Proc)
+      def isType(type)
+        return type if type.is_a?(Proc)
 
-	  	 	createValidator("[Type #{type}]") do |value|
-	  	 		raise TypeCheckError, "Type violation: value '#{value}' (#{value.class}) is not an instance of [Type #{type}]" unless value.is_a?(type)
-	  	 	end
-	  	end
+        createValidator("[Type #{type}]") do |value|
+          raise TypeCheckError, "Type violation: value '#{value}' (#{value.class}) is not an instance of [Type #{type}]" unless value.is_a?(type)
+        end
+      end
 
-	  	alias_method :isInstanceOf, :isType
-	  	alias_method :isConsumerOf, :isType
+      alias_method :isInstanceOf, :isType
+      alias_method :isConsumerOf, :isType
 
-	  	def hasMethods(*methods)
-	  		createValidator("[hasMethods #{methods}]") do |object|
-	  			methods.each do |method|
-	  				unless object.respond_to? method.to_sym
-	  					raise TypeCheckError, "hasMethods violation: object #{object} (#{object.class}) should implement method #{method}"
-	  				end	
-	  			end
-	  		end
-	  	end
+      def hasMethods(*methods)
+        createValidator("[hasMethods #{methods}]") do |object|
+          methods.each do |method|
+            unless object.respond_to? method.to_sym
+              raise TypeCheckError, "hasMethods violation: object #{object} (#{object.class}) should implement method #{method}"
+            end 
+          end
+        end
+      end
 
-			def isAllOf(*conditions)
-	  		createValidator("[AllOf [#{conditions.map{|t| t.to_s }.join(', ')}]]") do |value|
-	  			begin
-		  			conditions.each { |c| isType(c).call(value) }
-		  		rescue TypeCheckError => e
-		  			raise TypeCheckError, "AllOf Check violation: caused by [#{e}]"
-		  		end	
-		  	end
-	  	end
+      def isAllOf(*conditions)
+        createValidator("[AllOf [#{conditions.map{|t| t.to_s }.join(', ')}]]") do |value|
+          begin
+            conditions.each { |c| isType(c).call(value) }
+          rescue TypeCheckError => e
+            raise TypeCheckError, "AllOf Check violation: caused by [#{e}]"
+          end 
+        end
+      end
 
-	  	def isAnyOf(*conditions)
-	  		conditions = conditions.flatten
-	  		createValidator("[AnyOf [#{conditions.map{|t| t.to_s }.join(', ')}]]") do |value|
+      def isAnyOf(*conditions)
+        conditions = conditions.flatten
+        createValidator("[AnyOf [#{conditions.map{|t| t.to_s }.join(', ')}]]") do |value|
 
-		  		find = false		  		
-		  		exceptions = []
+          find = false          
+          exceptions = []
 
-		  		for c in conditions
-		  			begin
-		  				isType(c).call(value)
-		  				find = true
-		  				break
-		  			rescue TypeCheckError => ex
-		  				exceptions << ex
-		  			rescue => e
-							raise TypeCheckError, "unexpected exception #{e}"  				
-		  			end
-		  		end
+          for c in conditions
+            begin
+              isType(c).call(value)
+              find = true
+              break
+            rescue TypeCheckError => ex
+              exceptions << ex
+            rescue => e
+              raise TypeCheckError, "unexpected exception #{e}"         
+            end
+          end
 
-		  		raise TypeCheckError, "AnyOf Check violation: caused by [#{exceptions.map{|e| e.to_s}.join', '}]" unless find
-		  	end
-	  	end
+          raise TypeCheckError, "AnyOf Check violation: caused by [#{exceptions.map{|e| e.to_s}.join', '}]" unless find
+        end
+      end
 
-	  	def isEnum(*possible_values)
-	  		possible_constants = possible_values.flatten.map do |value| 
-	  			isConstant(value) 
-	  		end
+      def isEnum(*possible_values)
+        possible_constants = possible_values.flatten.map do |value| 
+          isConstant(value) 
+        end
 
-	  		createValidator("[Enum #{possible_values}]") do |value|
-	  			begin 
-	  				isAnyOf(possible_constants).call(value)
-	  			rescue TypeCheckError => e
-	  				raise TypeCheckError, "Enum Check violation: value '#{value}' (#{value.class}) is not #{possible_values}"
-	  			end
-	  		end
-	  	end
+        createValidator("[Enum #{possible_values}]") do |value|
+          begin 
+            isAnyOf(possible_constants).call(value)
+          rescue TypeCheckError => e
+            raise TypeCheckError, "Enum Check violation: value '#{value}' (#{value.class}) is not #{possible_values}"
+          end
+        end
+      end
 
-	  	def isNot(condition)
-	  		createValidator("[NOT #{condition.to_s}]") do |value|
-	  			success = false
-	  			begin
-	  				condition.call(value)
-	  				success = true
-	  			rescue TypeCheckError => e
-	  				nil
-	  			end
+      def isNot(condition)
+        createValidator("[NOT #{condition.to_s}]") do |value|
+          success = false
+          begin
+            condition.call(value)
+            success = true
+          rescue TypeCheckError => e
+            nil
+          end
 
-	  			if success
-	  				raise TypeCheckError, "Not violation: value '#{value}' (#{value.class}) is not #{condition.to_s}"
-	  			end	
-	  		end
-	  	end
+          if success
+            raise TypeCheckError, "Not violation: value '#{value}' (#{value.class}) is not #{condition.to_s}"
+          end 
+        end
+      end
 
-	  	def isMaybe(type)
-	  		createValidator("[Maybe #{type.to_s}]") do |value|
-	  			begin
-	  				isAnyOf(isType(type), isConstant(nil)).call(value)
-	  			rescue TypeCheckError => e
-	  				raise TypeCheckError, "Maybe violation: caused by #{e}"
-	  			end
-	  		end		
-	  	end
+      def isMaybe(type)
+        createValidator("[Maybe #{type.to_s}]") do |value|
+          begin
+            isAnyOf(isType(type), isConstant(nil)).call(value)
+          rescue TypeCheckError => e
+            raise TypeCheckError, "Maybe violation: caused by #{e}"
+          end
+        end   
+      end
 
-	  	def isArray(type=nil)
-	  		type = isAny if type.nil?
+      def isArray(type=nil)
+        type = isAny if type.nil?
 
-	  		createValidator "[Array #{type.to_s}]" do |array|
-	  			isType(Array).call(array)
+        createValidator "[Array #{type.to_s}]" do |array|
+          isType(Array).call(array)
 
-	  			array.each do |item| 
-	  				begin
-	  					isType(type).call(item)
-	  				rescue TypeCheckError => e
-	  					raise TypeCheckError, "Array violation: caused by #{e}"
-	  				end
-	  			end
-	  		end
-	  	end 
+          array.each do |item| 
+            begin
+              isType(type).call(item)
+            rescue TypeCheckError => e
+              raise TypeCheckError, "Array violation: caused by #{e}"
+            end
+          end
+        end
+      end 
 
-	  	def isHash(map={})
-	  		if map.empty?
-	  			map = {isAny => isAny }
-	  		end
+      def isHash(map={})
+        if map.empty?
+          map = {isAny => isAny }
+        end
 
-	  		keyType, valueType = map.shift
+        keyType, valueType = map.shift
 
-	  		createValidator "[Hash #{keyType.to_s} => #{valueType.to_s}]" do |hash|
-	  			isType(Hash).call(hash)
+        createValidator "[Hash #{keyType.to_s} => #{valueType.to_s}]" do |hash|
+          isType(Hash).call(hash)
 
-	  			hash.each_pair do| key, value| 
-	  				begin
-  						isType(keyType).call(key)
-  						isType(valueType).call(value)
-	  				rescue TypeCheckError => e
-	  					raise TypeCheckError, "Hash violation: caused by #{e}"
-	  				end
-	  			end
-	  		end
-	  	end
+          hash.each_pair do| key, value| 
+            begin
+              isType(keyType).call(key)
+              isType(valueType).call(value)
+            rescue TypeCheckError => e
+              raise TypeCheckError, "Hash violation: caused by #{e}"
+            end
+          end
+        end
+      end
 
-	  	def isTuple(*types)
+      def isTuple(*types)
 
-	  		createValidator "[Tuple [#{types.map{|t| t.to_s}.join ', '}]]" do |tuple|
-	  			isType(Array).call(tuple)
+        createValidator "[Tuple [#{types.map{|t| t.to_s}.join ', '}]]" do |tuple|
+          isType(Array).call(tuple)
 
-	  			unless tuple.size == types.size
-	  				raise TypeCheckError, "Tuple violation: size should be #{types.size} instead #{tuple.size}"
-	  			end
+          unless tuple.size == types.size
+            raise TypeCheckError, "Tuple violation: size should be #{types.size} instead #{tuple.size}"
+          end
 
-	  			types.each_index do |index|
-	  				begin
-	  					isType(types[index]).call(tuple[index])
-	  				rescue TypeCheckError => e
-	  					raise TypeCheckError, "Tuple violation: on position #{index} caused by #{e}"
-	  				end
-	  			end
-	  		end
+          types.each_index do |index|
+            begin
+              isType(types[index]).call(tuple[index])
+            rescue TypeCheckError => e
+              raise TypeCheckError, "Tuple violation: on position #{index} caused by #{e}"
+            end
+          end
+        end
 
-	  	end
+      end
 
-	  	def isSet(type=nil)
-	  		type = isAny if type.nil?
+      def isSet(type=nil)
+        type = isAny if type.nil?
 
-	  		createValidator "[Set #{type.to_s}]" do |set|
-	  			isType(Array).call(set)
+        createValidator "[Set #{type.to_s}]" do |set|
+          isType(Array).call(set)
 
-	  			if set.uniq.size != set.size
-	  				duplicated = set.inject(Hash.new(0)) {|h,i| h[i] += 1; h }.select{|k,v| v > 1 }
-	  				raise TypeCheckError, "Set violation: has one or more non unique elements: #{duplicated} (value => count)"
-	  			end	
+          if set.uniq.size != set.size
+            duplicated = set.inject(Hash.new(0)) {|h,i| h[i] += 1; h }.select{|k,v| v > 1 }
+            raise TypeCheckError, "Set violation: has one or more non unique elements: #{duplicated} (value => count)"
+          end 
 
-	  			set.each do |item| 
-	  				begin
-	  					isType(type).call(item)
-	  				rescue TypeCheckError => e
-	  					raise TypeCheckError, "Set violation: caused by #{e}"
-	  				end
-	  			end
-	  		end
-	  	end 
+          set.each do |item| 
+            begin
+              isType(type).call(item)
+            rescue TypeCheckError => e
+              raise TypeCheckError, "Set violation: caused by #{e}"
+            end
+          end
+        end
+      end 
 
-	  end
-	end 
+    end
+  end 
 end

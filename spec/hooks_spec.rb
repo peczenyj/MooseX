@@ -60,3 +60,37 @@ describe "Hooks2" do
 		h.sum(1,2,3).should == 7
 	end
 end
+
+class OtherPoint 
+	include MooseX
+
+	has [:x, :y ], { is: :rw, required: true }
+
+	def clear!
+		self.x = 0
+		self.y = 0
+	end
+end
+
+class OtherPoint3D < OtherPoint
+
+	has z: { is: :rw, required: true }
+
+	after :clear! do |object|
+		object.z = 0
+	end
+end
+describe "OtherPoint3D" do
+	it "should clear a 3d point" do 
+		p = OtherPoint3D.new(x: 1, y: 2, z: 3)
+		p.x.should == 1
+		p.y.should == 2
+		p.z.should == 3
+
+		p.clear!
+
+		p.x.should == 0
+		p.y.should == 0
+		p.z.should == 0
+	end
+end	

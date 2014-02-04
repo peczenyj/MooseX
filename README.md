@@ -354,6 +354,220 @@ end
 ```
 Optional.
 
+## Hooks: after/before/around
+
+Another great feature imported from Moose are the hooks after/before/around one method. You can run an arbitrary code, for example:
+
+```ruby
+class Point 
+  include MooseX
+
+  has [:x, :y ], { is: :rw, required: true }
+
+  def clear!
+    self.x = 0
+    self.y = 0
+  end
+end
+
+class Point3D < Point
+
+  has z: { is: :rw, required: true }
+
+  after :clear! do |object|
+    object.z = 0
+  end
+end
+```
+
+instead redefine the 'clear!' method in the subclass, we just add a piece of code, a lambda, and it will be executed after the normal 'clear!' method.
+
+### after 
+
+The after hook should receive the name of the method as a Symbol and a lambda. This lambda will, in the argument list, one reference for the object (self) and the rest of the arguments. This will redefine the the original method, add the code to run after the method. The after does not affect the return value of the original method, if you need this, use the 'around' hook.
+
+### before 
+
+The before hook should receive the name of the method as a Symbol and a lambda. This lambda will, in the argument list, one reference for the object (self) and the rest of the arguments. This will redefine the the original method, add the code to run before the method.
+
+A good example should be logging:
+
+```ruby
+class Point 
+  include MooseX
+
+  def my_method(x)
+    # do something
+  end
+
+  before :my_method do |object, x|
+    puts "#{Time.now} before my_method(#{x})"
+  end
+  after :my_method do |object, x|
+    puts "#{Time.now} after my_method(#{x})"
+  end
+end
+```
+
+### around
+
+The around hook is agressive: it will substitute the original method for a lambda. This lambda will receive the original method, a reference for the object and the argument list
+
+```ruby
+  around(:sum) do |original_method, object, a,b,c|
+    result = original_method.bind(object).call(a,b,c)
+    result + 1
+  end
+```
+
+it is useful to manipulate the return value if you need.
+
+## Types
+
+MooseX has a built-in type system to be helpful in many circunstances. How many times you need check if some argument is_a? Something? Or it respond_to? :some_method ? Now it is over. If you include the MooseX::Types module in your MooseX class you can use:
+
+### isAny
+
+will accept any type. Useful to combine with other types.
+
+```ruby
+  has x: { is: :rw, isa: isAny }
+```
+
+### isConstant
+
+will verify using :=== if the value is equal to some contant
+
+```ruby
+  has x: { is: :rw, isa: isConstant(1) }
+```
+
+### isType, isInstanceOf and isConsumerOf
+
+will verify the type using is_a? method. should receive a Class. isInstanceOf is an alias, to be used with Classes and isConsumerOf is for Modules.
+
+```ruby
+  has x: { is: :rw, isa: isConsumerOf(Enumerable) }
+```
+
+### hasMethods
+
+will verify if the value respond_to? for one or more methods.
+
+```ruby
+  has x: { is: :rw, isa: hasMethods(:to_s) }
+```
+### isEnum
+
+verify if the value is part of one enumeration of constants.
+
+```ruby
+  has x: { is: :rw, isa: isEnum(:black, :white, :red, :green, :yellow) }
+```
+
+### isMaybe(type)
+
+verify if the value isa type or is nil. You can combine with other types.
+
+```ruby
+  has x: { is: :rw, isa: isMaybe(Integer) } # accepts 1,2,3... or nil
+```
+
+### isNot(type)
+
+will revert the type check. Useful to combine with other types
+
+```ruby
+  has x: { 
+    is: :rw,   # x will accept any values EXCEPT :black, :white...
+    isa: isNot(isEnum(:black, :white, :red, :green, :yellow)) 
+  }
+```
+
+### isArray(type)
+
+Will verify if the value is an Array. Can receive one extra type, and we will verify each element inside the array againt this type, or Any if we not specify the type.
+
+```ruby
+  has x: { 
+    is: :rw,  
+    isa: isArray()    # will accept any array
+  }
+  has y: { 
+    is: :rw,          # this is a more complex type
+    isa: isArray(isArray(isMaybe(Integer))) 
+  }  
+```
+
+### isHash(type=>type)
+
+similar to isArray. if you do not specify a pair of types, it will check only if the value is_a? Hash. Otherwise we will verify each pair key/value.
+
+```ruby
+  has x: { 
+    is: :rw,  
+    isa: isHash()       # will accept any Hash
+  }
+  has y: { 
+    is: :rw,            # this is a more complex type
+    isa: isHash(Integer => isArray(isMaybe(Integer))) 
+  }  
+```
+
+## isSet(type)
+
+similar to isSet. the difference is: it will raise one exception if there are non unique elements in this array.
+
+```ruby
+  has x: { 
+    is: :rw,  
+    isa: isSet(Integer)  # will accept [1,2,3] but not [1,1,1]
+  }
+```
+
+## isTuple(types)
+
+similar to isArray, Tuples are Arrays with fixed size. We will verify the type of each element.
+
+For example, to specify one tuple with three elements, the first is Integer, the second is a Symbol and the las should be a String or nil:
+
+```ruby
+  has x: { 
+    is: :rw,  
+    isa: isTuple(Integer, Symbol, isMaybe(String))       
+  }
+```
+
+### isAllOf(types)
+
+will combine all types and will fail if one of the condition fails.
+
+```ruby
+  has x: { 
+    is: :rw,  
+    isa: isAllOf(
+        hasMethods(:foo, :bar),     # x should has foo and bar methods
+        isConsumerOf(Enumerable),   # AND should be an Enumerable
+        isNot(SomeForbiddenClass),  # AND and should not be an SomeForbiddenClass
+      )
+  }
+```
+
+### isAnyOf(types)
+
+will combine all types and will fail if all of the condition fails.
+
+```ruby
+  has x: { 
+    is: :rw,  
+    isa: isAnyOf(
+        hasMethods(:foo, :bar),   # x should has foo and bar methods 
+        isEnum(1,2,3,4),          # OR be 1,2,3 or 4
+        isHash(isAny => Integer)  # OR be an Hash of any type => Integers
+      )
+  }
+```
+
 ## BUILD
 
 If you need run some code after the creation of the object (like some extra validation), you should override the BUILD method.
