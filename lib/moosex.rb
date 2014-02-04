@@ -93,6 +93,10 @@ module MooseX
 		end
 	end	
 	
+	class InvalidAttributeError < TypeError
+
+	end
+
 	class Attribute
 		include MooseX::Types
 
@@ -113,7 +117,7 @@ module MooseX
 		VALIDATE = {
 			is: lambda do |is, field_name| 
 				unless [:rw, :rwp, :ro, :lazy, :private].include?(is)
-					raise "invalid value for field '#{field_name}' is '#{is}', must be one of :private, :rw, :rwp, :ro or :lazy"  
+					raise InvalidAttributeError, "invalid value for field '#{field_name}' is '#{is}', must be one of :private, :rw, :rwp, :ro or :lazy"  
 				end
 			end,
 		};
@@ -147,7 +151,7 @@ module MooseX
 					predicate.to_sym
 				rescue => e
 					# create a nested exception here
-					raise "cannot coerce field predicate to a symbol for #{field_name}: #{e}"
+					raise InvalidAttributeError, "cannot coerce field predicate to a symbol for #{field_name}: #{e}"
 				end
 			end,
 			clearer: lambda do|clearer, field_name| 
@@ -161,7 +165,7 @@ module MooseX
 					clearer.to_sym
 				rescue => e
 					# create a nested exception here
-					raise "cannot coerce field clearer to a symbol for #{field_name}: #{e}"
+					raise InvalidAttributeError, "cannot coerce field clearer to a symbol for #{field_name}: #{e}"
 				end
 			end,
 			handles: lambda do |handles, field_name|
@@ -178,7 +182,7 @@ module MooseX
 
 						if handle == BasicObject
 							
-							raise "ops, should not use BasicObject for handles in #{field_name}"
+							raise InvalidAttributeError, "ops, should not use BasicObject for handles in #{field_name}"
 						
 						elsif handle.is_a? Class
 
@@ -256,7 +260,7 @@ module MooseX
 
 			REQUIRED.each { |field| 
 				unless o.has_key?(field)
-					raise "field #{field} is required for Attribute #{a}" 
+					raise InvalidAttributeError, "field #{field} is required for Attribute #{a}" 
 				end
 			}
 			COERCE.each_pair do |field, coerce|
@@ -338,7 +342,7 @@ module MooseX
 				value = @default.call
 				value_from_default = true
 			elsif @required
-				raise "attr \"#{@attr_symbol}\" is required"
+				raise InvalidAttributeError, "attr \"#{@attr_symbol}\" is required"
 			else
 				return
 			end
@@ -346,8 +350,8 @@ module MooseX
 			value = @coerce.call(value) 	
  			begin
 				@isa.call( value )
-			rescue MooseX::Types::TypeCheckException => e
-				raise MooseX::Types::TypeCheckException, "isa check for field #{attr_symbol}: #{e}"
+			rescue MooseX::Types::TypeCheckError => e
+				raise MooseX::Types::TypeCheckError, "isa check for field #{attr_symbol}: #{e}"
 			end
 			unless value_from_default
 				@trigger.call(object, value)
@@ -374,8 +378,8 @@ module MooseX
 					value = coerce.call(value)
 					begin
 						type_check.call( value )
-					rescue MooseX::Types::TypeCheckException => e
-						raise MooseX::Types::TypeCheckException, "isa check for #{inst_variable_name} from builder: #{e}"
+					rescue MooseX::Types::TypeCheckError => e
+						raise MooseX::Types::TypeCheckError, "isa check for #{inst_variable_name} from builder: #{e}"
 					end
 
 					trigger.call(object, value)
@@ -399,8 +403,8 @@ module MooseX
 				value = coerce.call(value)
 				begin
 					type_check.call( value )
-				rescue MooseX::Types::TypeCheckException => e
-					raise MooseX::Types::TypeCheckException, "isa check for #{writter_name}: #{e}"
+				rescue MooseX::Types::TypeCheckError => e
+					raise MooseX::Types::TypeCheckError, "isa check for #{writter_name}: #{e}"
 				end
 				trigger.call(self,value)
 				instance_variable_set inst_variable_name, value

@@ -89,14 +89,14 @@ describe "Point" do
 			p = Point.new
 			expect { 
 				p.x = "lol" 
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"isa check for x=: Type violation: value 'lol' (String) is not an instance of [Type Integer]")
 		end	
 		
 		it "for x, with type check" do			
 			expect { 
 				Point.new(x: "lol") 
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"isa check for field x: Type violation: value 'lol' (String) is not an instance of [Type Integer]")
 		end	
 
@@ -175,14 +175,14 @@ describe "Point3D" do
 			p = Point3D.new
 			expect { 
 				p.z = "lol" 
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"isa check for z=: Type violation: value 'lol' (String) is not an instance of [Type Integer]")
 		end	
 		
 		it "for z, with type check" do			
 			expect { 
 				Point3D.new(z: "lol") 
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"isa check for field z: Type violation: value 'lol' (String) is not an instance of [Type Integer]")
 		end	
 

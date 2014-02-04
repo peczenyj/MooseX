@@ -1,4 +1,4 @@
-
+	- improve exception #15
 	- improve type system via MooseX::Types #16
 	
 0.0.10 - 2014-02-03

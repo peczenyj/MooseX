@@ -51,7 +51,7 @@ describe "MooseX::Types" do
 		it "should raise error" do
 			expect { 
 				Test.isConstant(1).call(0) 
-			}.to raise_error(MooseX::Types::TypeCheckException, "Constant violation: value '0' (Fixnum) is not '1' (Fixnum)")
+			}.to raise_error(MooseX::Types::TypeCheckError, "Constant violation: value '0' (Fixnum) is not '1' (Fixnum)")
 		end
 	end
 
@@ -94,7 +94,7 @@ describe "MooseX::Types" do
 		it "Constant should raise error" do
 			expect { 
 				Test.isType(Array).call({}) 
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Type violation: value '{}' (Hash) is not an instance of [Type Array]")
 		end
 
@@ -129,12 +129,12 @@ describe "MooseX::Types" do
 		it "Constant should raise error" do
 			expect { 
 				Test.isAllOf(Fixnum,Integer,Numeric, Test.isConstant(1)).call(2)
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"AllOf Check violation: caused by [Constant violation: value '2' (Fixnum) is not '1' (Fixnum)]")
 
 			expect { 
 				Test.isAllOf(Fixnum,Integer,Numeric, Test.isConstant(1)).call(nil)
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"AllOf Check violation: caused by [Type violation: value '' (NilClass) is not an instance of [Type Fixnum]]")
 
 		end
@@ -182,12 +182,12 @@ describe "MooseX::Types" do
 		it "should raise error" do
 			expect { 
 				Test.isAnyOf(TrueClass, FalseClass).call(nil)
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"AnyOf Check violation: caused by [Type violation: value '' (NilClass) is not an instance of [Type TrueClass], Type violation: value '' (NilClass) is not an instance of [Type FalseClass]]")
 
 			expect { 
 				Test.isAnyOf(Fixnum, String, Symbol).call([])
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"AnyOf Check violation: caused by [Type violation: value '[]' (Array) is not an instance of [Type Fixnum], Type violation: value '[]' (Array) is not an instance of [Type String], Type violation: value '[]' (Array) is not an instance of [Type Symbol]]")
 
 		end
@@ -207,7 +207,7 @@ describe "MooseX::Types" do
 		it "should raise error"	do
 			expect { 
 				Test.isEnum(1,2,3).call(4)
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Enum Check violation: value '4' (Fixnum) is not [1, 2, 3]")
 		end
 	end
@@ -248,7 +248,7 @@ describe "MooseX::Types" do
 		it "should raise error" do
 			expect { 
 				Test.isNot(Test.isEnum(1,2,3)).call(2)
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Not violation: value '2' (Fixnum) is not [Enum [1, 2, 3]]")
 		end
 	end
@@ -281,12 +281,12 @@ describe "MooseX::Types" do
 		it "should raise error" do
 			expect {
 				Test.isMaybe(Test.isConstant(9)).call(8)
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Maybe violation: caused by AnyOf Check violation: caused by [Constant violation: value '8' (Fixnum) is not '9' (Fixnum), Constant violation: value '8' (Fixnum) is not '' (NilClass)]")
 
 			expect {
 				Test.isMaybe(TrueClass).call(false)
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Maybe violation: caused by AnyOf Check violation: caused by [Type violation: value 'false' (FalseClass) is not an instance of [Type TrueClass], Constant violation: value 'false' (FalseClass) is not '' (NilClass)]")
 
 		end
@@ -316,17 +316,17 @@ describe "MooseX::Types" do
 		it "should raise error" do
 			expect {
 				Test.isArray(Test.isArray(Test.isMaybe(Integer))).call(nil)
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Type violation: value '' (NilClass) is not an instance of [Type Array]")
 
 			expect {
 				Test.isArray(Test.isArray(Test.isMaybe(Integer))).call([false])
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Array violation: caused by Type violation: value 'false' (FalseClass) is not an instance of [Type Array]")
 
 			expect {
 				Test.isArray(Test.isArray(Test.isMaybe(Integer))).call([[false]])
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Array violation: caused by Array violation: caused by Maybe violation: caused by AnyOf Check violation: caused by [Type violation: value 'false' (FalseClass) is not an instance of [Type Integer], Constant violation: value 'false' (FalseClass) is not '' (NilClass)]")			
 		end
 	end
@@ -359,11 +359,11 @@ describe "MooseX::Types" do
 		it "should raise error" do
 			expect{
 				Test.isHash().call(nil)
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"Type violation: value '' (NilClass) is not an instance of [Type Hash]")
 			expect{
 				Test.isHash(Symbol => Integer).call({ 1 => 2})
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"Hash violation: caused by Type violation: value '1' (Fixnum) is not an instance of [Type Symbol]")			
 		end
 	end
@@ -392,19 +392,19 @@ describe "MooseX::Types" do
 		it "should raise error" do
 			expect {
 				Test.isTuple().call([1])
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"Tuple violation: size should be 0 instead 1")
 			expect {
 				Test.isTuple(Integer).call([])
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"Tuple violation: size should be 1 instead 0")
 			expect {
 				Test.isTuple().call(nil)
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"Type violation: value '' (NilClass) is not an instance of [Type Array]")							
 			expect {
 				Test.isTuple(Integer, Symbol, Test.isAny, TrueClass).call([1,:symbol, nil, false])
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"Tuple violation: on position 3 caused by Type violation: value 'false' (FalseClass) is not an instance of [Type TrueClass]")					
 		end
 	end
@@ -430,22 +430,22 @@ describe "MooseX::Types" do
 		it "should raise error" do
 			expect {
 				Test.isSet(Test.isArray(Test.isMaybe(Integer))).call(nil)
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Type violation: value '' (NilClass) is not an instance of [Type Array]")
 
 			expect {
 				Test.isSet(Test.isArray(Test.isMaybe(Integer))).call([false])
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Set violation: caused by Type violation: value 'false' (FalseClass) is not an instance of [Type Array]")
 
 			expect {
 				Test.isSet(Test.isArray(Test.isMaybe(Integer))).call([[false]])
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Set violation: caused by Array violation: caused by Maybe violation: caused by AnyOf Check violation: caused by [Type violation: value 'false' (FalseClass) is not an instance of [Type Integer], Constant violation: value 'false' (FalseClass) is not '' (NilClass)]")
 
 			expect {
 				Test.isSet(Integer).call([1,2,2])
-			}.to raise_error(MooseX::Types::TypeCheckException, 
+			}.to raise_error(MooseX::Types::TypeCheckError, 
 				"Set violation: has one or more non unique elements: {2=>2} (value => count)")
 		end
 	end
@@ -470,7 +470,7 @@ describe "MooseX::Types" do
 		it "should raise error" do
 			expect {
 				Test.hasMethods(:bar, :baz, :bam).call(1)
-			}.to raise_error(MooseX::Types::TypeCheckException,
+			}.to raise_error(MooseX::Types::TypeCheckError,
 				"hasMethods violation: object 1 (Fixnum) should implement method bar")
 		end
 	end
