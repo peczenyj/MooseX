@@ -1,6 +1,6 @@
 # MooseX
 
-A postmodern object DSL for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX) [![Gem Version](https://badge.fury.io/rb/moosex.png)](http://badge.fury.io/rb/moosex)
+A postmodern object DSL for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX) [![Gem Version](https://badge.fury.io/rb/moosex.png)](http://badge.fury.io/rb/moosex) [![Coverage Status](https://coveralls.io/repos/peczenyj/MooseX/badge.png)](https://coveralls.io/r/peczenyj/MooseX)
 
 THIS MODULE IS EXPERIMENTAL YET! BE CAREFUL!
 
