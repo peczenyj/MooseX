@@ -21,10 +21,6 @@ class CoerceTest
 		coerce: lambda {|value| value.to_i },
 		builder: lambda{|object| "2048" },
 	}
-
-	def trigger_attr(new_value)
-		puts "change value of attribute to #{new_value}"
-	end
 end
 
 describe "CoerceTest" do

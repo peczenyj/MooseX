@@ -110,6 +110,8 @@ has :attribute_name, { hash of properties }
 
 to describe one new attribute you shoud specify some properties inside a Hash. The only mandatory property is the ':is', to specify how we should create the acessors (if public or private).
 
+**IMPORTANT**: until now it is not possible redefine attributes when you extends a MooseX class / role. There is one issue for this: [here](https://github.com/peczenyj/MooseX/issues/19 "issue in github").
+
 The options for "has" are as follows:
 
 ### is
@@ -382,6 +384,10 @@ end
 
 instead redefine the 'clear!' method in the subclass, we just add a piece of code, a lambda, and it will be executed after the normal 'clear!' method.
 
+Each after/before/around will **redefine** the original method in order. If you want override the method in some subclass, you will loose all hooks. The best way to preserve all hooks is using after/before/around to modify the behavior if possible. 
+
+**IMPORTANT** This behavior is temporary, there is an issue for this [here](https://github.com/peczenyj/MooseX/issues/41 "issue in github").
+
 ### after 
 
 The after hook should receive the name of the method as a Symbol and a lambda. This lambda will, in the argument list, one reference for the object (self) and the rest of the arguments. This will redefine the the original method, add the code to run after the method. The after does not affect the return value of the original method, if you need this, use the 'around' hook.
@@ -572,9 +578,60 @@ will combine all types and will fail if all of the condition fails.
   }
 ```
 
+## Roles
+
+Roles are Modules with steroids. If you include the MooseX module in another module, this module became a "Role", capable of store attributes to be reuse in other MooseX classes. For example:
+
+```ruby
+require 'moosex'
+
+module Eq
+  include MooseX.disable_warnings() # or enable_warningss (default)
+
+  requires :equal
+
+  def no_equal(other)
+    ! self.equal(other)
+  end 
+end
+
+module Valuable
+  include MooseX
+
+  has value: { is: :ro, requires: true } 
+end 
+
+class Currency
+  include Valuable
+  include Eq  # will warn unless disable_warnings was called.
+              # to avoid warnings, you should include after  
+              # define all required modules,
+
+  def equal(other)
+    self.value == other.value
+  end
+
+  # include Eq # warning 'safe' include, after equal declaration
+end
+
+c1 = ComplexRole::Currency.new( value: 12 )
+c2 = ComplexRole::Currency.new( value: 12 )
+
+c1.equal(c2)          # true, they have the same value
+c1.no_equal(c2)       # will return false
+```
+
+Roles can support has to describe attributes, and you can reuse code easily. You can also use after/before/around only in methods defined/imported in that Module.
+
+For example, we can add a 'after' block for no_equal inside Eq, but not for equal - this limitation will be fixed soon (see issue #41 @ github).
+
+### requires
+
+You can also mark one or more methods as 'required'. When you do this, we will raise one exception if you try to create a new instance and the class does not implement it. It is a safe way to create interfaces or abstract classes. It uses respond_to? to verify.
+
 ## BUILD
 
-If you need run some code after the creation of the object (like some extra validation), you should override the BUILD method.
+If you need run some code after the creation of the object (like some extra validation), you should implement the BUILD method.
 
 ```ruby
 class BuildExample 

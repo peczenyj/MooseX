@@ -111,12 +111,6 @@ end
 
 class Point3D < Point
 
-	has x: {        # override original attr!
-		is: :rw,
-		isa: Integer,
-		default: 1,
-	}
-	
 	has z: {
 		is: :rw,      # read-write (mandatory)
 		isa: Integer, # should be Integer
@@ -141,7 +135,7 @@ describe "Point3D" do
 	describe "should has an intelligent constructor" do
 		it "without arguments, should initialize with default values" do
 			p = Point3D.new
-			p.x.should == 1
+			p.x.should be_zero
 			p.y.should be_zero
 			p.z.should be_zero
 			p.what_is_the_color_of_this_point.should == :red

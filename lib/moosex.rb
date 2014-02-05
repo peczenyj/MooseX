@@ -9,30 +9,56 @@ require "moosex/version"
 require "moosex/types"
 
 module MooseX
+	$MOOSEX_DEBUG = true
+
+	def MooseX.enable_warnings()
+		$MOOSEX_DEBUG = false
+		MooseX
+	end	
+
+	def MooseX.disable_warnings()
+		$MOOSEX_DEBUG = false
+		MooseX
+	end	
+
+	class RequiredMethodNotFoundError < NameError
+	end
 
 	def MooseX.included(c)
-			
+	
 		c.extend(MooseX::Core)
-			
-		c.class_exec do 
-			meta = MooseX::Meta.new
+		
+		def c.included(x)
+			MooseX.included(x)
+			x.__meta.load_from(self.__meta)
 
-			define_singleton_method(:__meta) { meta }
+			return unless x.is_a? Class
+
+			x.__meta.requires.each do |method|
+				unless x.public_instance_methods.include? method
+					warn "[MooseX] you must implement method '#{method}' in #{x} #{x.class}: required" if $MOOSEX_DEBUG
+				end	
+			end			
 		end
 
+		meta = MooseX::Meta.new
+
+		unless c.respond_to? :__meta
+			c.class_exec do 
+				define_singleton_method(:__meta) { meta }
+			end
+		end
+				
 		def initialize(*args)	
-			args = BUILDARGS(*args)
+			if self.respond_to? :BUILDARGS
+				args = self.BUILDARGS(*args)
+			else
+				args = args[0]					
+			end	
 			
 			self.class.__meta().init(self, args || {})
 
-			BUILD()
-		end
-
-		def BUILDARGS(*args)
-			args[0]
-		end
-
-		def BUILD
+			self.BUILD() if self.respond_to? :BUILD
 		end
 
 		def c.inherited(subclass)
@@ -48,40 +74,40 @@ module MooseX
 	end
 	
 	class Meta
-		attr_reader :attrs, :after, :before, :around
+		attr_reader :attrs, :requires
 
 		def initialize(old_meta=nil)
-			@attrs = []
-			@after = Hash.new {|hash, key| hash[key] = []}
-			@before= Hash.new {|hash, key| hash[key] = []}
-			@around= Hash.new {|hash, key| hash[key] = []}
-
+			@attrs    = []
+			@requires = []
 			if old_meta
-				@attrs = old_meta.attrs.map{|att| att.clone }
-				@after.merge! old_meta.after.clone
-				@before.merge! old_meta.before.clone
-				@around.merge! old_meta.around.clone
+				@attrs    = old_meta.attrs.map{|att| att.clone }
+				@requires = old_meta.requires.clone
 			end
+		end
+
+		def load_from(other_meta)
+			@attrs += other_meta.attrs
+			@requires += other_meta.requires
 		end
 		
 		def add(attr)
 			@attrs << attr
 		end
 
-		def add_after(method, block)
-			@after[method] << MooseX::Hook::After.new(method, block)
-		end
-		
-		def add_before(method, block)
-			@before[method]  << MooseX::Hook::Before.new(method, block)			
-		end
-
-		def add_around(method, block)
-			@around[method]  << MooseX::Hook::Around.new(method, block)			
+		def add_requires(method)
+			@requires << method
 		end
 
 		def init(object, args)
 			@attrs.each{ |attr| attr.init(object, args) }
+
+			warn "[MooseX] unused attributes #{args} for #{object.class}" if $MOOSEX_DEBUG && ! args.empty?	
+
+			@requires.each do |method|
+				unless object.respond_to? method
+					raise RequiredMethodNotFoundError,"you must implement method '#{method}' in #{object.class}: required"
+				end	
+			end
 		end
 	end	
 
@@ -95,7 +121,7 @@ module MooseX
 				result
 			end
 
-			__meta.add_after(method_name, block)
+#			__meta.add_after(method_name, block)
 		end
 
 		def before(method_name, &block)
@@ -106,7 +132,7 @@ module MooseX
 				method.bind(self).call(*args)
 			end
 
-			__meta.add_before(method_name, block)
+#			__meta.add_before(method_name, block)
 		end
 
 		def around(method_name, &block)
@@ -117,7 +143,14 @@ module MooseX
 				block.call(method, self,*args)
 				
 			end			
-			__meta.add_around(method, block)
+#			__meta.add_around(method, block)
+		end
+
+		def requires(*methods)
+
+			methods.each do |method_name|
+				__meta.add_requires(method_name)
+			end	
 		end
 
 		def has(attr_name, attr_options = {})
@@ -131,7 +164,7 @@ module MooseX
 				end
 			else
 
-				attr = MooseX::Attribute.new(attr_name, attr_options)
+				attr = MooseX::Attribute.new(attr_name, attr_options, self)
 
 				attr.methods.each_pair do |method, proc|
 					define_method method, &proc
@@ -149,25 +182,6 @@ module MooseX
 		end
 	end	
 	
-	module Hook
-		class Base
-			attr_reader :method, :block
-			def initialize(method, block)
-				@method= method 
-				@block = block
-			end
-		end
-
-		class After < Base
-		end
-
-		class Before < Base
-		end
-
-		class Around < Base
-		end
-	end
-
 	class InvalidAttributeError < TypeError
 
 	end
@@ -323,7 +337,7 @@ module MooseX
 			end,
 		};
 
-		def initialize(a, o)
+		def initialize(a, o, x)
 			#o ||= {}
 			# todo extract this to a framework, see issue #21 on facebook
 			o = DEFAULTS.merge({
@@ -361,21 +375,23 @@ module MooseX
 			end
 
 			@attr_symbol = a
-			@is          = o[:is]
-			@isa         = o[:isa]
-			@default     = o[:default]
-			@required    = o[:required] 
-			@predicate   = o[:predicate]
-			@clearer     = o[:clearer]
-			@handles     = o[:handles]
-			@lazy        = o[:lazy]
-			@reader      = o[:reader]
-			@writter     = o[:writter]
-			@builder     = o[:builder]
-			@init_arg    = o[:init_arg]
-			@trigger     = o[:trigger]
-			@coerce      = o[:coerce]
+			@is          = o.delete(:is)
+			@isa         = o.delete(:isa)
+			@default     = o.delete(:default)
+			@required    = o.delete(:required) 
+			@predicate   = o.delete(:predicate)
+			@clearer     = o.delete(:clearer)
+			@handles     = o.delete(:handles)
+			@lazy        = o.delete(:lazy)
+			@reader      = o.delete(:reader)
+			@writter     = o.delete(:writter)
+			@builder     = o.delete(:builder)
+			@init_arg    = o.delete(:init_arg)
+			@trigger     = o.delete(:trigger)
+			@coerce      = o.delete(:coerce)
 			@methods     = {}
+
+			warn "[MooseX] unused attributes #{o} for attribute #{a} @ #{x} #{x.class}" if $MOOSEX_DEBUG && ! o.empty?	
 
 			if @reader 
 				@methods[@reader] = generate_reader
@@ -412,7 +428,7 @@ module MooseX
 			value_from_default = false
 			
 			if args.has_key? @init_arg
-				value = args[ @init_arg ]
+				value = args.delete(@init_arg)
 			elsif @default
 				value = @default.call
 				value_from_default = true
