@@ -77,21 +77,25 @@ module MooseX
 		attr_reader :attrs, :requires
 
 		def initialize(old_meta=nil)
-			@attrs    = []
+			@attrs    = {}
 			@requires = []
 			if old_meta
-				@attrs    = old_meta.attrs.map{|att| att.clone }
+				old_meta.attrs.each_pair do |key, value|
+					@attrs[key] = value.clone
+				end
 				@requires = old_meta.requires.clone
 			end
 		end
 
 		def load_from(other_meta)
-			@attrs += other_meta.attrs
+			other_meta.attrs.each_pair do |key, value|
+				@attrs[key] = value.clone
+			end			
 			@requires += other_meta.requires
 		end
 		
 		def add(attr)
-			@attrs << attr
+			@attrs[attr.attr_symbol] = attr
 		end
 
 		def add_requires(method)
@@ -99,7 +103,7 @@ module MooseX
 		end
 
 		def init(object, args)
-			@attrs.each{ |attr| attr.init(object, args) }
+			@attrs.each_pair{ |symbol, attr| attr.init(object, args) }
 
 			warn "[MooseX] unused attributes #{args} for #{object.class}" if $MOOSEX_DEBUG && ! args.empty?	
 

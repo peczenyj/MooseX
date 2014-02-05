@@ -110,8 +110,6 @@ has :attribute_name, { hash of properties }
 
 to describe one new attribute you shoud specify some properties inside a Hash. The only mandatory property is the ':is', to specify how we should create the acessors (if public or private).
 
-**IMPORTANT**: until now it is not possible redefine attributes when you extends a MooseX class / role. There is one issue for this: [here](https://github.com/peczenyj/MooseX/issues/19 "issue in github").
-
 The options for "has" are as follows:
 
 ### is
@@ -598,7 +596,7 @@ end
 module Valuable
   include MooseX
 
-  has value: { is: :ro, requires: true } 
+  has value: { is: :ro, required: true } 
 end 
 
 class Currency

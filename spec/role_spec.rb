@@ -2,7 +2,7 @@ require 'moosex'
 
 module ComplexRole
 	module Eq
-		include MooseX.disable_warnings()
+		include MooseX #.disable_warnings()
 
 		requires :equal
 
@@ -14,7 +14,7 @@ module ComplexRole
 	module Valuable
 		include MooseX
 
-		has value: { is: :ro, requires: true } 
+		has value: { is: :ro, required: true } 
 	end	
 
 	class Currency
