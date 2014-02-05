@@ -1,4 +1,5 @@
 0.0.12 - 2013-02-05
+	- basic support override attributes #19
 	- basic support to roles #17
 
 0.0.11 - 2013-02-04
@@ -7,7 +8,7 @@
 	- improve type system via MooseX::Types #16
 	
 0.0.10 - 2014-02-03
-	- improve readme #2014-02-01
+	- improve readme
     - BUILDARGS should accept different signatures #36
     - clearer create by default clear_#{attr_name}! public method
     - add attr :private #35
