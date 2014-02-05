@@ -415,16 +415,17 @@ end
 
 ### around
 
-The around hook is agressive: it will substitute the original method for a lambda. This lambda will receive the original method, a reference for the object and the argument list
+The around hook is agressive: it will substitute the original method for a lambda. This lambda will receive the original method as a lambda, a reference for the object and the argument list, you shuld call the method_lambda using object + arguments
 
 ```ruby
-  around(:sum) do |original_method, object, a,b,c|
-    result = original_method.bind(object).call(a,b,c)
+  around(:sum) do |method_lambda, object, a,b,c|
+    c = 0
+    result = method_lambda.call(object,a,b,c)
     result + 1
   end
 ```
 
-it is useful to manipulate the return value if you need.
+it is useful to manipulate the return value or argument list, add a begin/rescue block, aditional validations, etc, if you need.
 
 ## MooseX::Types
 

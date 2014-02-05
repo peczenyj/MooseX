@@ -143,9 +143,13 @@ module MooseX
 		def around(method_name, &block)
 			method = instance_method method_name
 
+			code = Proc.new do | o, *a| 
+				method.bind(o).call(*a) 
+			end
+
 			define_method method_name do |*args|
 				
-				block.call(method, self,*args)
+				block.call(code, self,*args)
 				
 			end			
 #			__meta.add_around(method, block)

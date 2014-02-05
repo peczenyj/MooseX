@@ -35,9 +35,9 @@ describe "Hooks" do
 end
 
 class Hooks2 < Hooks
-	around(:sum) do |original_method, object, a,b,c|
+	around(:sum) do |method_lambda, object, a,b,c|
 		object.logger.inside_around_begin(a,b,c)
-		result = original_method.bind(object).call(a,b,c)
+		result = method_lambda.call(object,a,b,c)
 		object.logger.inside_around_end(a,b,c)
 		result + 1
 	end
