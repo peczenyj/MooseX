@@ -1,3 +1,6 @@
+0.0.13 - 2013-02-05
+	- change around to receive a lambda #42
+
 0.0.12 - 2013-02-05
 	- basic support override attributes #19
 	- basic support to roles #17
