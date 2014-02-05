@@ -5,6 +5,3 @@ SimpleCov.start do
 	add_group 'core', 'lib'
 	add_group 'test', 'spec'
 end
-
-#require 'coveralls'
-#Coveralls.wear!
