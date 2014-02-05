@@ -9,10 +9,10 @@
 	
 0.0.10 - 2014-02-03
 	- improve readme
-    - BUILDARGS should accept different signatures #36
-    - clearer create by default clear_#{attr_name}! public method
-    - add attr :private #35
-    - methods predicate, clearer and handles are no longer singleton methods #34
+  - BUILDARGS should accept different signatures #36
+  - clearer create by default clear_#{attr_name}! public method
+  - add attr :private #35
+  - methods predicate, clearer and handles are no longer singleton methods #34
 
 0.0.9 - 2014-02-02
 	- support to BUILD and BUILDARGS #5 and #6
@@ -28,9 +28,9 @@
   - add min version of ruby should be 2.0.x
 
 0.0.6 - 2014-02-01
-  - fix bug when extends subclass, now it is safe #18
-  - required attr with default value will no longer throw exception #30
-  - supports handles for: single method, array, Class or Module #27
+	- fix bug when extends subclass, now it is safe #18
+	- required attr with default value will no longer throw exception #30
+	- supports handles for: single method, array, Class or Module #27
 
 0.0.5 - 2014-01-31
 	- should support handles #13 (partial)
