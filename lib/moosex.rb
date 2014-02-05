@@ -109,7 +109,8 @@ module MooseX
 
 			@requires.each do |method|
 				unless object.respond_to? method
-					raise RequiredMethodNotFoundError,"you must implement method '#{method}' in #{object.class}: required"
+					raise RequiredMethodNotFoundError,
+						"you must implement method '#{method}' in #{object.class}: required"
 				end	
 			end
 		end
