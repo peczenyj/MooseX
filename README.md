@@ -25,8 +25,8 @@ class Point
   }
 
   def clear! 
-    self.x= 0      # to run with type-check you must
-    self.y= 0      # use the setter instad @x=
+    self.x= 0     # to run with type-check you must
+    self.y= 0     # use the setter instad @x=
   end
 
   def to_s
@@ -523,7 +523,7 @@ similar to isArray. if you do not specify a pair of types, it will check only if
   }  
 ```
 
-## isSet(type)
+### isSet(type)
 
 similar to isArray. the difference is: it will raise one exception if there are non unique elements in this array.
 
@@ -534,7 +534,7 @@ similar to isArray. the difference is: it will raise one exception if there are 
   }
 ```
 
-## isTuple(types)
+### isTuple(types)
 
 similar to isArray, Tuples are Arrays with fixed size. We will verify the type of each element.
 
@@ -613,8 +613,8 @@ class Currency
   # include Eq # warning 'safe' include, after equal declaration
 end
 
-c1 = ComplexRole::Currency.new( value: 12 )
-c2 = ComplexRole::Currency.new( value: 12 )
+c1 = Currency.new( value: 12 )
+c2 = Currency.new( value: 12 )
 
 c1.equal(c2)          # true, they have the same value
 c1.no_equal(c2)       # will return false
