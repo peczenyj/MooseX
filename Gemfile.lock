@@ -46,3 +46,4 @@ DEPENDENCIES
   moosex!
   rake
   rspec
+  simplecov
