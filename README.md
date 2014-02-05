@@ -524,7 +524,7 @@ similar to isArray. if you do not specify a pair of types, it will check only if
 
 ## isSet(type)
 
-similar to isSet. the difference is: it will raise one exception if there are non unique elements in this array.
+similar to isArray. the difference is: it will raise one exception if there are non unique elements in this array.
 
 ```ruby
   has x: { 
