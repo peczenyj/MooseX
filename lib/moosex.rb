@@ -34,6 +34,9 @@ module MooseX
 
 			return unless x.is_a? Class
 
+			x.__meta.load_hooks(self.__meta)
+			self.__meta.init_klass(x)
+
 			x.__meta.requires.each do |method|
 				unless x.public_instance_methods.include? method
 					warn "[MooseX] you must implement method '#{method}' in #{x} #{x.class}: required" if $MOOSEX_DEBUG
@@ -46,6 +49,9 @@ module MooseX
 		unless c.respond_to? :__meta
 			c.class_exec do 
 				define_singleton_method(:__meta) { meta }
+				define_singleton_method(:__meta_define_method) do |method_name, &proc| 
+					define_method(method_name, proc)
+				end				
 			end
 		end
 				
@@ -74,11 +80,16 @@ module MooseX
 	end
 	
 	class Meta
-		attr_reader :attrs, :requires
+		attr_reader :attrs, :requires, :before, :after, :around
 
 		def initialize(old_meta=nil)
+			@initialized = false
 			@attrs    = {}
 			@requires = []
+			@before   = Hash.new { |hash, key| hash[key] = [] }
+			@after    = Hash.new { |hash, key| hash[key] = [] }
+			@around   = Hash.new { |hash, key| hash[key] = [] }
+
 			if old_meta
 				old_meta.attrs.each_pair do |key, value|
 					@attrs[key] = value.clone
@@ -94,12 +105,64 @@ module MooseX
 			@requires += other_meta.requires
 		end
 		
+		def load_hooks(other_meta)
+			other_meta.before.each_pair do |m, b|
+				@before[m] += b.clone
+			end
+			other_meta.after.each_pair do |m, b|
+				@after[m] += b.clone
+			end
+			other_meta.around.each_pair do |m, b|
+				@around[m] += b.clone
+			end							
+		end
+
 		def add(attr)
 			@attrs[attr.attr_symbol] = attr
 		end
 
 		def add_requires(method)
 			@requires << method
+		end
+
+		def add_before(method_name, block)
+			@before[method_name] << block.clone
+		end
+
+		def add_after(method_name, block)
+			@after[method_name] << block.clone
+		end
+
+		def add_around(method_name, block)
+			@around[method_name] << block.clone
+		end
+
+		def init_klass(klass)
+			#return if @initialized
+
+			[@before.keys + @after.keys + @around.keys].flatten.uniq.each do |method_name|
+				method = klass.instance_method method_name
+
+				before = @before[method_name]
+				after  = @after[method_name]
+				around = @around[method_name]
+
+				klass.__meta_define_method(method_name) do |*args|
+					before.each{|b| b.call(self,*args)}
+					
+					original = lambda do |object, *args| 
+						method.bind(object).call(*args)
+					end	
+
+					result = around.inject(original) do |lambda1, lambda2|
+						lambda2.curry[lambda1] 
+					end.call(self, *args)
+
+					after.each{|b| b.call(self,*args)}
+					
+					result
+				end
+			end
 		end
 
 		def init(object, args)
@@ -118,41 +181,48 @@ module MooseX
 
 	module Core
 		def after(method_name, &block)
-			method = instance_method method_name
+			begin
+				method = instance_method method_name
 
-			define_method method_name do |*args|
-				result = method.bind(self).call(*args)
-				block.call(self,*args)
-				result
-			end
-
-#			__meta.add_after(method_name, block)
+				define_method method_name do |*args|
+					result = method.bind(self).call(*args)
+					block.call(self,*args)
+					result
+				end
+			rescue => e
+				__meta.add_after(method_name, block)
+			end	
 		end
 
 		def before(method_name, &block)
-			method = instance_method method_name
+			begin
+				method = instance_method method_name
 
-			define_method method_name do |*args|
-				block.call(self,*args)
-				method.bind(self).call(*args)
-			end
-
-#			__meta.add_before(method_name, block)
+				define_method method_name do |*args|
+					block.call(self,*args)
+					method.bind(self).call(*args)
+				end
+			rescue => e
+				__meta.add_before(method_name, block)			
+			end	
 		end
 
 		def around(method_name, &block)
-			method = instance_method method_name
+			begin			
+				method = instance_method method_name
 
-			code = Proc.new do | o, *a| 
-				method.bind(o).call(*a) 
+				code = Proc.new do | o, *a| 
+					method.bind(o).call(*a) 
+				end
+
+				define_method method_name do |*args|
+					
+					block.call(code, self,*args)
+					
+				end		
+			rescue => e	
+				__meta.add_around(method_name, block)
 			end
-
-			define_method method_name do |*args|
-				
-				block.call(code, self,*args)
-				
-			end			
-#			__meta.add_around(method, block)
 		end
 
 		def requires(*methods)

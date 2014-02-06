@@ -1,3 +1,6 @@
+0.0.14 - 2013-02-05
+	- roles with around/before/after basic support #41
+
 0.0.13 - 2013-02-05
 	- change around to receive a lambda #42
 

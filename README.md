@@ -384,7 +384,9 @@ instead redefine the 'clear!' method in the subclass, we just add a piece of cod
 
 Each after/before/around will **redefine** the original method in order. If you want override the method in some subclass, you will loose all hooks. The best way to preserve all hooks is using after/before/around to modify the behavior if possible. 
 
-**IMPORTANT** This behavior is temporary, there is an issue for this [here](https://github.com/peczenyj/MooseX/issues/41 "issue in github").
+Roles and Hooks
+
+If you try to add one role to a method who does not exists yet, this will be added in the next class. BE CAREFUL, THIS IS EXPERIMENTAL! PLEASE REPORT ANY BUG IF YOU FIND!!!
 
 ### after 
 

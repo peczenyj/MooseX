@@ -80,6 +80,7 @@ class OtherPoint3D < OtherPoint
 		object.z = 0
 	end
 end
+
 describe "OtherPoint3D" do
 	it "should clear a 3d point" do 
 		p = OtherPoint3D.new(x: 1, y: 2, z: 3)
@@ -94,3 +95,29 @@ describe "OtherPoint3D" do
 		p.z.should == 0
 	end
 end	
+
+class OtherPoint4D < OtherPoint3D
+
+	has t: { is: :rw, required: true }
+
+	after :clear! do |object|
+		object.t = 0
+	end
+end
+
+describe "OtherPoint4D" do
+	it "should clear a 3d point" do 
+		p = OtherPoint4D.new(x: 1, y: 2, z: 3, t: 4)
+		p.x.should == 1
+		p.y.should == 2
+		p.z.should == 3
+		p.t.should == 4
+
+		p.clear!
+
+		p.x.should == 0
+		p.y.should == 0
+		p.z.should == 0
+		p.t.should == 0		
+	end
+end
