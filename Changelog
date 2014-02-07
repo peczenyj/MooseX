@@ -1,3 +1,4 @@
+0.0.16 - 2013-02-07
     - add currying to handles #46
     - not after/before/around works well with methods who receive a block
 
