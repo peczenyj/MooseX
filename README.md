@@ -2,6 +2,36 @@
 
 A postmodern object DSL for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX) [![Gem Version](https://badge.fury.io/rb/moosex.png)](http://badge.fury.io/rb/moosex)
 
+## Introduction
+
+This is another DSL for object creation, aspects, method delegation and much more. It is based on Perl Moose and Moo, two important modules who add a better way of Object Orientation development (and I enjoy A LOT). Using a declarative stype, using Moose/Moo you can create attributes, methods, the entire constructor and much more. But I can't find something similar in Ruby world, so I decide port a small subset of Moose to create a powerfull DSL for object construction.
+
+Of course, there is few similar projects in ruby like 
+
+- [Virtus](https://github.com/solnic/virtus)
+- [Active Record Validations](http://edgeguides.rubyonrails.org/active_record_validations.html)
+
+But the objetive of MooseX is different: this is a toolbox to create Classes based on DSL, with unique features like
+
+- method delegation ( see 'handles')
+- lazy attributes
+- roles
+- parameterized roles
+- composable type check
+- events
+
+and much more.
+
+This rubygem is based on this modules:
+
+- [Perl Moose](http://search.cpan.org/~ether/Moose-2.1204/lib/Moose.pm)
+- [Perl Moo](http://search.cpan.org/~ether/Moose-2.1204/lib/Moose.pm)
+- [MooX::Types::MooseLike::Base](http://search.cpan.org/~mateu/MooX-Types-MooseLike-0.25/lib/MooX/Types/MooseLike/Base.pm)
+- [MooseX::Event](http://search.cpan.org/~winter/MooseX-Event-v0.2.0/lib/MooseX/Event.pm)
+- [MooseX::Role::Parameterized](http://search.cpan.org/~sartak/MooseX-Role-Parameterized-1.02/lib/MooseX/Role/Parameterized/Tutorial.pod)
+
+Why MooseX? Because the namespace MooseX/MooX is open to third-party projects/plugins/extensions. You can upgrade your Moo(se) class using other components if you want. And there is one gem called 'moose' :/
+
 THIS MODULE IS EXPERIMENTAL YET! BE CAREFUL!
 
 Talk is cheap. Show me the code!
@@ -691,9 +721,9 @@ Roles can support has to describe attributes, and you can reuse code easily.
 You can also mark one or more methods as 'required'. When you do this, we will raise one exception if you try to create a new instance and the class does not implement it. It is a safe way to create interfaces or abstract classes. It uses respond_to? to verify.
 
 
-## Parametric Roles
+## Parameterized Roles
 
-Parametric roles is a good way of reuse code based on roles. For example, to create one or more attributes in the class who includes our role, we just add the code to be executed in the on_init hook.
+Parameterized roles is a good way of reuse code based on roles. For example, to create one or more attributes in the class who includes our role, we just add the code to be executed in the on_init hook.
 
 ```ruby
 module EasyCrud
@@ -713,9 +743,9 @@ class LogTest
 
 when we call `init` with arguments, we will call all on_init blocks defined in the role. In this example we inject attributes 'a' and 'b' with reader/writter and a predicate based on the name ex: `has_attr_a_or_not?`
 
-### composable parametric roles
+### composable parameterized roles
 
-To combine one or more parametric roles to another parametric role you should do something like this:
+To combine one or more parameterized roles to another parameterized role you should do something like this:
 
 ```ruby
 module Logabble2
@@ -889,7 +919,7 @@ ep.ping   # will print "receive ping!"
 ep.pong 1 # will print "receive pong with 1!"
 ```
 
-Now, imagine what you can do with a Parametrized Role: we can create all handles based on event names!
+Now, imagine what you can do with a parameterized role: we can create all handles based on event names!
 
 ## IMPORTANT
 
@@ -901,10 +931,10 @@ I am open to suggestions too.
 
 ## TODO
 
-1. Support to Roles ( it is a Module on Steroids )
-2. Support to after/before/around 
-3. Improve the typecheck system (we should specify: we need an array of positive integers)
-4. Improve the exception and warning system
+1. Support to Roles ( it is a Module on Steroids ) [done] 
+2. Support to after/before/around [done]
+3. Improve the typecheck system (we should specify: we need an array of positive integers) [done]
+4. Improve the exception and warning system [in progress]
 5. Profit!
 
 ## Limitations
