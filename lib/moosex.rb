@@ -9,17 +9,28 @@ require "moosex/version"
 require "moosex/types"
 
 module MooseX
-	$MOOSEX_DEBUG = true
-
-	def MooseX.enable_warnings()
-		$MOOSEX_DEBUG = false
-		MooseX
-	end	
-
-	def MooseX.disable_warnings()
-		$MOOSEX_DEBUG = false
-		MooseX
-	end	
+	@@MOOSEX_WARNINGS = true
+	@@MOOSEX_FATAL    = false
+	
+	class FatalError < StandardError
+	end  
+	
+	def self.warn(x, *c)
+	  raise FatalError, "[MooseX] exception: #{x}",*c if @@MOOSEX_FATAL
+    Kernel.warn("[MooseX] warning: #{x}") if @@MOOSEX_WARNINGS
+	end
+	
+	def self.init(args={})
+	  if args.has_key? :warnings
+	    @@MOOSEX_WARNINGS = !! args[:warnings]
+	  end
+	  
+	  if args.has_key? :fatal
+	    @@MOOSEX_FATAL = !! args[:fatal]
+	  end
+	  
+	  self
+  end
 
 	class RequiredMethodNotFoundError < NameError
 	end
@@ -29,6 +40,7 @@ module MooseX
 		c.extend(MooseX::Core)
 		
 		def c.included(x)
+		  
 			MooseX.included(x)
 			x.__meta.load_from(self.__meta)
 
@@ -39,7 +51,7 @@ module MooseX
 
 			x.__meta.requires.each do |method|
 				unless x.public_instance_methods.include? method
-					warn "[MooseX] you must implement method '#{method}' in #{x} #{x.class}: required" if $MOOSEX_DEBUG
+					MooseX.warn "you must implement method '#{method}' in #{x} #{x.class}: required"# if $MOOSEX_DEBUG
 				end	
 			end			
 		end
@@ -141,8 +153,13 @@ module MooseX
 			#return if @initialized
 
 			[@before.keys + @after.keys + @around.keys].flatten.uniq.each do |method_name|
-				method = klass.instance_method method_name
-
+			  begin
+				  method = klass.instance_method method_name
+        rescue => e
+          MooseX.warn "Unable to apply hooks (after/before/around) in #{klass}::#{method_name} : #{e}" # if $MOOSEX_DEBUG
+          next
+        end  
+        
 				before = @before[method_name]
 				after  = @after[method_name]
 				around = @around[method_name]
@@ -168,7 +185,7 @@ module MooseX
 		def init(object, args)
 			@attrs.each_pair{ |symbol, attr| attr.init(object, args) }
 
-			warn "[MooseX] unused attributes #{args} for #{object.class}" if $MOOSEX_DEBUG && ! args.empty?	
+			MooseX.warn "unused attributes #{args} for #{object.class}", caller unless args.empty?	
 
 			@requires.each do |method|
 				unless object.respond_to? method
@@ -179,7 +196,7 @@ module MooseX
 		end
 	end	
 
-	module Core
+	module Core	  
 		def after(method_name, &block)
 			begin
 				method = instance_method method_name
@@ -190,6 +207,7 @@ module MooseX
 					result
 				end
 			rescue => e
+			  MooseX.warn "unable to apply hook after in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)	
 				__meta.add_after(method_name, block)
 			end	
 		end
@@ -203,6 +221,7 @@ module MooseX
 					method.bind(self).call(*args)
 				end
 			rescue => e
+			  MooseX.warn "unable to apply hook before in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)	
 				__meta.add_before(method_name, block)			
 			end	
 		end
@@ -220,7 +239,8 @@ module MooseX
 					block.call(code, self,*args)
 					
 				end		
-			rescue => e	
+			rescue => e
+			  MooseX.warn "unable to apply hook around in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)			  	
 				__meta.add_around(method_name, block)
 			end
 		end
@@ -416,7 +436,7 @@ module MooseX
 			end,
 		};
 
-		def initialize(a, o, x)
+		def initialize(a, o ,x)
 			#o ||= {}
 			# todo extract this to a framework, see issue #21 on facebook
 			o = DEFAULTS.merge({
@@ -470,7 +490,7 @@ module MooseX
 			@coerce      = o.delete(:coerce)
 			@methods     = {}
 
-			warn "[MooseX] unused attributes #{o} for attribute #{a} @ #{x} #{x.class}" if $MOOSEX_DEBUG && ! o.empty?	
+			MooseX.warn "Unused attributes #{o} for attribute #{a} @ #{x} #{x.class}",caller() if ! o.empty?	
 
 			if @reader 
 				@methods[@reader] = generate_reader
