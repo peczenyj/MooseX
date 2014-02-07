@@ -587,7 +587,7 @@ Roles are Modules with steroids. If you include the MooseX module in another mod
 require 'moosex'
 
 module Eq
-  include MooseX.disable_warnings() # or enable_warningss (default)
+  include MooseX
 
   requires :equal
 
@@ -603,11 +603,10 @@ module Valuable
 end 
 
 class Currency
-  include Valuable
-  include Eq  # will warn unless disable_warnings was called.
-              # to avoid warnings, you should include after  
-              # define all required modules,
-
+  include Valuable.init(warnings: false) # default is true!
+  include Eq  # default will warn about equal missing. 
+              # alternative: include after equal definition!
+              
   def equal(other)
     self.value == other.value
   end
