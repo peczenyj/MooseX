@@ -1,3 +1,4 @@
+    - add basic event support #45
     - add parametric roles #44
     - add init method to enable warnings and exceptions #43
 

@@ -212,52 +212,58 @@ module MooseX
 	    __meta.add_role(block)
 	  end
 	  	  
-		def after(method_name, &block)
-			begin
-				method = instance_method method_name
+		def after(*methods_name, &block)
+  	  methods_name.each do |method_name|  
+  			begin
+  				method = instance_method method_name
 
-				define_method method_name do |*args|
-					result = method.bind(self).call(*args)
-					block.call(self,*args)
-					result
-				end
-			rescue => e
-			  MooseX.warn "unable to apply hook after in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)	
-				__meta.add_after(method_name, block)
-			end	
+  				define_method method_name do |*args|
+  					result = method.bind(self).call(*args)
+  					block.call(self,*args)
+  					result
+  				end
+  			rescue => e
+  			  MooseX.warn "unable to apply hook after in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)	
+  				__meta.add_after(method_name, block)
+  			end
+  		end	
 		end
 
-		def before(method_name, &block)
-			begin
-				method = instance_method method_name
+		def before(*methods_name, &block)
+		  methods_name.each do |method_name|
+  			begin
+  				method = instance_method method_name
 
-				define_method method_name do |*args|
-					block.call(self,*args)
-					method.bind(self).call(*args)
-				end
-			rescue => e
-			  MooseX.warn "unable to apply hook before in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)	
-				__meta.add_before(method_name, block)			
-			end	
-		end
-
-		def around(method_name, &block)
-			begin
-			  method = instance_method method_name
-
-				code = Proc.new do | o, *a| 
-					method.bind(o).call(*a) 
-				end
-
-				define_method method_name do |*args|
-					
-					block.call(code, self,*args)
-					
-				end		
-			rescue => e
-			  MooseX.warn "unable to apply hook around in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)			  	
-				__meta.add_around(method_name, block)
+  				define_method method_name do |*args|
+  					block.call(self,*args)
+  					method.bind(self).call(*args)
+  				end
+  			rescue => e
+  			  MooseX.warn "unable to apply hook before in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)	
+  				__meta.add_before(method_name, block)			
+  			end	
 			end
+		end
+
+		def around(*methods_name, &block)
+  		methods_name.each do |method_name|  		    
+  			begin
+  			  method = instance_method method_name
+
+  				code = Proc.new do | o, *a| 
+  					method.bind(o).call(*a) 
+  				end
+
+  				define_method method_name do |*args|
+					
+  					block.call(code, self,*args)
+					
+  				end		
+  			rescue => e
+  			  MooseX.warn "unable to apply hook around in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)			  	
+  				__meta.add_around(method_name, block)
+  			end
+  		end	
 		end
 
 		def requires(*methods)

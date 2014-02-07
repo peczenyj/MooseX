@@ -18,6 +18,7 @@ module ComplexRole
 	end	
 
 	class Currency
+	  include MooseX
 		include Valuable
 		include Eq  # will warn unless disable_warnings was called.
                     # to avoid warnings, you should include after  

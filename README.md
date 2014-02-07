@@ -730,6 +730,55 @@ ex2 = BuildArgsExample2.new(1)   # x == 1, y == 8
 ex3 = BuildArgsExample2.new()    # x == 4, y == 8
 ```
 
+## EVENTS
+
+MooseX has a built-in event system, and it should be useful if you want to avoid after/before hooks ( depends of what is yout problem ).
+
+```ruby
+require 'moosex'
+require 'moosex/event'
+
+class Example
+  include MooseX
+  include MooseX::Event
+  
+  def ping
+    self.emit(:pinged)
+  end
+end
+
+e = Example.new
+
+e.on(:pinged) do |object|
+    puts "Ping!"
+end
+
+e.once(:pinged) do |object|
+    puts "Ping Once!"
+end
+  
+e.ping # will print two messages, "Ping!" and "Ping Once!"
+e.ping # will print just "Ping!"  
+
+e.remove_all_listeners(:pinged)
+
+e.ping # will no longer print nothing
+
+# you can use arguments
+# consider you have one logger attribute in this example
+listener = e.on(:error) do |obj, message|
+    obj.logger.fatal("Error: #{message}")
+end
+
+e.emit(:error, "ops") # will log, as fatal, "Error: ops"
+
+e.remove_listener( error: listener )
+
+e.emit(:error, "...") # will no longer log nothing
+```
+
+If you want to restrict how many different events you can handle, you should overload the `has_events` method and return one array of valid events. If you want accept all, you should return nil (default).
+
 ## IMPORTANT
 
 This module is experimental. I should test more and more to be possible consider this "production ready". If you find some issue/bug please add here: https://github.com/peczenyj/MooseX/issues
