@@ -175,18 +175,18 @@ module MooseX
 				after  = @after[method_name]
 				around = @around[method_name]
 
-				klass.__meta_define_method(method_name) do |*args|
-					before.each{|b| b.call(self,*args)}
+				klass.__meta_define_method(method_name) do |*args, &proc|
+					before.each{|b| b.call(self,*args, &proc)}
 					
-					original = lambda do |object, *args| 
-						method.bind(object).call(*args)
+					original = lambda do |object, *args, &proc| 
+						method.bind(object).call(*args, &proc)
 					end	
 
 					result = around.inject(original) do |lambda1, lambda2|
 						lambda2.curry[lambda1] 
-					end.call(self, *args)
+					end.call(self, *args, &proc)
 
-					after.each{|b| b.call(self,*args)}
+					after.each{|b| b.call(self,*args, &proc)}
 					
 					result
 				end
@@ -217,9 +217,9 @@ module MooseX
   			begin
   				method = instance_method method_name
 
-  				define_method method_name do |*args|
-  					result = method.bind(self).call(*args)
-  					block.call(self,*args)
+  				define_method method_name do |*args, &proc|
+  					result = method.bind(self).call(*args, &proc)
+  					block.call(self,*args,&proc)
   					result
   				end
   			rescue => e
@@ -234,9 +234,9 @@ module MooseX
   			begin
   				method = instance_method method_name
 
-  				define_method method_name do |*args|
-  					block.call(self,*args)
-  					method.bind(self).call(*args)
+  				define_method method_name do |*args, &proc|
+  					block.call(self,*args, &proc)
+  					method.bind(self).call(*args, &proc)
   				end
   			rescue => e
   			  MooseX.warn "unable to apply hook before in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)	
@@ -248,17 +248,17 @@ module MooseX
 		def around(*methods_name, &block)
   		methods_name.each do |method_name|  		    
   			begin
+  			  
   			  method = instance_method method_name
 
-  				code = Proc.new do | o, *a| 
-  					method.bind(o).call(*a) 
+  				code = Proc.new do | o, *a, &proc| 
+  					method.bind(o).call(*a,&proc) 
   				end
 
-  				define_method method_name do |*args|
-					
-  					block.call(code, self,*args)
-					
-  				end		
+  				define_method method_name do |*args, &proc|
+  					block.call(code, self,*args, &proc)
+  				end
+  				
   			rescue => e
   			  MooseX.warn "unable to apply hook around in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)			  	
   				__meta.add_around(method_name, block)
@@ -411,7 +411,15 @@ module MooseX
 				end
 
 				handles.map do |key,value|
-					{ key.to_sym => value.to_sym }
+          if value.is_a? Hash
+            raise "ops! Handle should accept only one map / currying" unless value.count == 1
+            
+            original, currying = value.shift
+  
+            { key.to_sym => [original.to_sym, currying] }
+          else
+					  { key.to_sym => value.to_sym }
+          end
 				end.reduce({}) do |hash,e| 
 					hash.merge(e)
 				end
@@ -537,9 +545,26 @@ module MooseX
 			
 			attr_symbol = @attr_symbol
 			@handles.each_pair do | method, target_method |
-				@methods[method] = Proc.new do |*args|
-					self.send(attr_symbol).send(target_method, *args)
-				end
+			  if target_method.is_a? Array
+			    original, currying = target_method
+
+  				@methods[method] = Proc.new do |*args, &proc|
+			    
+  			    a1 = [ currying ]
+			    
+  			    if currying.is_a?Proc
+  			      a1 = currying.call()
+  			    elsif currying.is_a? Array
+  			      a1 = currying.map{|c| (c.is_a?(Proc)) ? c.call : c }
+  			    end
+			    
+  					self.send(attr_symbol).send(original, *a1, *args, &proc)
+  				end			    
+			  else  
+  				@methods[method] = Proc.new do |*args, &proc|
+  					self.send(attr_symbol).send(target_method, *args, &proc)
+  				end
+  			end	
 			end			
 		end
 		

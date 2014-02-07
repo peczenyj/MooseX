@@ -12,7 +12,7 @@ class CoerceTest
 	has attribute_rw: {
 		is: :rw,
 		isa: Integer,
-		coerce: lambda {|value| value.to_i },
+		coerce: :to_i,
 	}
 
 	has attribute_lazy: {

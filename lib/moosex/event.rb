@@ -59,8 +59,7 @@ module MooseX
       listener
     end  
 
-    before(:add_event_listener, :emit) do |obj, event, *rest|
- 
+    before(:on, :once, :emit) do |obj, event, *rest, &proc|
       if ! obj.has_events.nil? && ! [ obj.has_events ].flatten.include?(event)
         
         raise EventException, "Event '#{event.inspect}' not supported, this class only allow: #{obj.has_events.inspect}",caller

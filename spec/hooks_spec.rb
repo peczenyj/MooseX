@@ -121,3 +121,97 @@ describe "OtherPoint4D" do
 		p.t.should == 0		
 	end
 end
+
+module ModuleHWB
+  include MooseX
+  
+  requires :info
+  
+  around(:call_with) do |original, object,x,&proc|
+    object.info(1,x)
+    
+    result= original.call(object,x,&proc)
+    
+    object.info(2,result)
+    
+    result
+  end
+
+  before(:call_with) do |object,x, &k|
+    object.info(3, x)
+  end  
+
+  after(:call_with) do |object,x,&k|
+    object.info(4, x)
+  end
+end
+
+class HooksWithBlocks
+  include MooseX
+
+  has logger: { is: :rw, handles: :info }
+    
+  def call_with(x)
+    yield(x)
+    #proc.call(x)
+  end  
+    
+  include ModuleHWB
+end
+
+class HooksWithBlocks2
+  include MooseX
+  
+  has logger: { is: :rw, handles: :info }
+  
+  def call_with(x, &proc)
+    #yield(x)
+    proc.call(x)
+  end  
+    
+  around(:call_with) do |original, object,x,&proc|
+    object.info(1,x)
+    
+    result= original.call(object,x,&proc)
+    
+    object.info(2,result)
+    
+    result
+  end
+
+  before(:call_with) do |object,x, &k|
+    object.info(3, x)
+  end  
+
+  after(:call_with) do |object,x,&k|
+    object.info(4, x)
+  end
+end
+
+describe HooksWithBlocks do
+  it "should call all hooks" do
+    logger = double
+    logger.should_receive(:info).with(3,7).once()
+    logger.should_receive(:info).with(1,7).once()
+    logger.should_receive(:info).with(2,8).once()
+    logger.should_receive(:info).with(4,7).once()
+    
+    x = HooksWithBlocks.new(logger: logger)
+    x.call_with(7){|x| x+1}
+  end
+end
+
+describe HooksWithBlocks2 do
+  it "should call all hooks" do
+    logger = double
+    logger.should_receive(:info).with(3,7).once()
+    logger.should_receive(:info).with(1,7).once()
+    logger.should_receive(:info).with(2,8).once()
+    logger.should_receive(:info).with(4,7).once()
+
+    x = HooksWithBlocks2.new(logger: logger)
+    x.call_with(7) do |x| 
+      x+1
+    end  
+  end
+end

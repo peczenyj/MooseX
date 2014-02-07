@@ -167,10 +167,16 @@ Optional.
 
 ### coerce
 
-You can try to coerce the attribute value by a lambda before the type check phase. For example you can do
+You can try to coerce the attribute value by a lambda/method before the type check phase. For example you can do
 
 ```ruby
   coerce: lambda{ |new_value| new_value.to_i },
+```
+
+or just
+
+```ruby
+  coerce: :to_i,
 ```
 
 to force a convertion to integer. Or flatten one array, convert to symbol, etc. Optional.
@@ -200,6 +206,63 @@ If you need rename the method, you can specify a Hash:
 ```
 
 Optional.
+#### Currying
+
+It is possible curry constant values declaring a pair/hash and set one or more constant values / lambdas
+
+```ruby
+  handles: {
+    my_method_1: {
+     method1: 1   
+    }
+  },
+```
+
+this will curry the constant 1 to the argument list. In other words:
+
+```ruby
+obj.target.method1(1,2,3) # OR
+obj.my_method_1(2,3)
+```
+
+are equivalent. You can curry as many arguments as you can.
+
+```ruby
+  handles: {
+    my_method_2: {
+     method2: [1, lambda{ 2 } ]   
+    }
+  },
+```
+
+will generate
+```ruby
+obj.target.method1(1,2,3) # OR
+obj.my_method_2(3)
+```
+
+are equivalent. if we find one lambda we will call on runtime.
+
+Important: if you need do something more complex ( like manipulate the argument list, etc ) consider use the hook 'around'.
+
+###### But how we can curry arrays?
+
+Use Double arrays
+
+```ruby
+  handles: {
+    my_method_1: {
+     method1: [ [1,2,3] ]  
+    }
+  },
+```
+this will curry the array [1,2,3] to the argument list. In other words:
+
+```ruby
+obj.target.method1([1,2,3],2,3) # OR
+obj.my_method_1(2,3)
+```
+are equivalent.
 
 ### trigger
 
@@ -732,7 +795,7 @@ ex3 = BuildArgsExample2.new()    # x == 4, y == 8
 
 ## EVENTS
 
-MooseX has a built-in event system, and it should be useful if you want to avoid after/before hooks ( depends of what is yout problem ).
+MooseX has a built-in event system, and it should be useful if you want to avoid after/before hooks ( depends of what is your problem ).
 
 ```ruby
 require 'moosex'
@@ -778,6 +841,55 @@ e.emit(:error, "...") # will no longer log nothing
 ```
 
 If you want to restrict how many different events you can handle, you should overload the `has_events` method and return one array of valid events. If you want accept all, you should return nil (default).
+
+For example, your method should emit many events, in many points, and you can add/remove listeners easily. And Much More!
+
+### Events + Handles / Currying
+
+Look this good example:
+
+```ruby
+require 'moosex'
+require 'moosex/event'
+
+class EventHandler
+  include MooseX
+  include MooseX::Event
+  
+  def has_events ; [ :pinged, :ponged ]; end    
+end
+
+class EventProcessor
+  include MooseX
+  
+  has event_handler: {
+    is: :ro,
+    isa: EventHandler,
+    default: lambda{ EventHandler.new }, # EventProcessor HAS ONE EventHandler
+    handles: {                           # Now, lets start to delegate and currying:
+      ping: { emit: :pinged },           # ping() is the same of event_handler.emit(:pinged)
+      pong: { emit: :ponged },           # pong(x) is the same of event_handler.emit(:pinged,x)
+      on_ping: { on: :pinged },          # 
+      on_pong: { on: :ponged },          # same thing for on_ping / on_pong
+    },
+  }
+end
+
+ep = EventProcessor.new()
+
+ep.on_ping do |obj| 
+  puts "receive ping!"
+end
+  
+ep.on_pong do |obj, message| 
+  puts "receive pong with #{message}!"
+end  
+
+ep.ping   # will print "receive ping!"
+ep.pong 1 # will print "receive pong with 1!"
+```
+
+Now, imagine what you can do with a Parametrized Role: we can create all handles based on event names!
 
 ## IMPORTANT
 
