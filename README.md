@@ -621,13 +621,64 @@ c1.equal(c2)          # true, they have the same value
 c1.no_equal(c2)       # will return false
 ```
 
-Roles can support has to describe attributes, and you can reuse code easily. You can also use after/before/around only in methods defined/imported in that Module.
-
-For example, we can add a 'after' block for no_equal inside Eq, but not for equal - this limitation will be fixed soon (see issue #41 @ github).
+Roles can support has to describe attributes, and you can reuse code easily. 
 
 ### requires
 
 You can also mark one or more methods as 'required'. When you do this, we will raise one exception if you try to create a new instance and the class does not implement it. It is a safe way to create interfaces or abstract classes. It uses respond_to? to verify.
+
+
+## Parametric Roles
+
+Parametric roles is a good way of reuse code based on roles. For example, to create one or more attributes in the class who includes our role, we just add the code to be executed in the on_init hook.
+
+```ruby
+module EasyCrud
+  include MooseX
+  
+  on_init do |*attributes|
+    attributes.each do | attr |
+      has attr, { is: :rw, predicate: "has_attr_#{attr}_or_not?" }
+    end
+  end
+end
+
+class LogTest
+  include EasyCrud.init(:a, :b)
+   ...
+```
+
+when we call `init` with arguments, we will call all on_init blocks defined in the role. In this example we inject attributes 'a' and 'b' with reader/writter and a predicate based on the name ex: `has_attr_a_or_not?`
+
+### composable parametric roles
+
+To combine one or more parametric roles to another parametric role you should do something like this:
+
+```ruby
+module Logabble2
+  include MooseX
+    
+  on_init do |args|
+    args[:klass] = self
+    include Logabble.init(args)
+  end  
+end
+
+module Logabble
+  include MooseX
+   
+  on_init do | args |
+
+    klass  = args[:klass]    || self  # <= THIS will guarantee you will
+    methods = args[:methods] || []    #    modify the right class
+
+    methods.each do |method|
+      klass.around(method) do |original, object, *args|
+        # add log around method
+        # call original method
+        # return
+    ...
+```
 
 ## BUILD
 

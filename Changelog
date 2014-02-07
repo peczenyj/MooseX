@@ -1,3 +1,6 @@
+    - add parametric roles #44
+    - add init method to enable warnings and exceptions #43
+
 0.0.14 - 2013-02-05
 	- roles with around/before/after basic support #41
 

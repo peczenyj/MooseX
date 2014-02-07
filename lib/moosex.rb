@@ -38,6 +38,12 @@ module MooseX
 	def MooseX.included(c)
 	
 		c.extend(MooseX::Core)
+
+    def c.init(*args)
+      __meta.roles.each{|role| role.call(*args)}
+      
+      self
+    end
 		
 		def c.included(x)
 		  
@@ -92,12 +98,13 @@ module MooseX
 	end
 	
 	class Meta
-		attr_reader :attrs, :requires, :before, :after, :around
+		attr_reader :attrs, :requires, :before, :after, :around, :roles
 
 		def initialize(old_meta=nil)
 			@initialized = false
 			@attrs    = {}
 			@requires = []
+			@roles    = []
 			@before   = Hash.new { |hash, key| hash[key] = [] }
 			@after    = Hash.new { |hash, key| hash[key] = [] }
 			@around   = Hash.new { |hash, key| hash[key] = [] }
@@ -148,6 +155,10 @@ module MooseX
 		def add_around(method_name, block)
 			@around[method_name] << block.clone
 		end
+		
+		def add_role(block)
+		  @roles << block
+    end
 
 		def init_klass(klass)
 			#return if @initialized
@@ -196,7 +207,11 @@ module MooseX
 		end
 	end	
 
-	module Core	  
+	module Core
+	  def on_init(&block)
+	    __meta.add_role(block)
+	  end
+	  	  
 		def after(method_name, &block)
 			begin
 				method = instance_method method_name
@@ -227,8 +242,8 @@ module MooseX
 		end
 
 		def around(method_name, &block)
-			begin			
-				method = instance_method method_name
+			begin
+			  method = instance_method method_name
 
 				code = Proc.new do | o, *a| 
 					method.bind(o).call(*a) 
