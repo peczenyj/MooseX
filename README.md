@@ -32,7 +32,8 @@ This rubygem is based on this modules:
 
 See also:
 
-[Joose](https://code.google.com/p/joose-js/), a javascript port of Moose.
+- [Joose](https://code.google.com/p/joose-js/), a javascript port of Moose.
+- [Perl 6](http://en.wikipedia.org/wiki/Perl_6#Object-oriented_programming) Perl 6 OO programming style.
 
 Why MooseX? Because the namespace MooseX/MooX is open to third-party projects/plugins/extensions. You can upgrade your Moo(se) class using other components if you want. And there is one gem called 'moose' :/
 
