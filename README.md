@@ -30,6 +30,10 @@ This rubygem is based on this modules:
 - [MooseX::Event](http://search.cpan.org/~winter/MooseX-Event-v0.2.0/lib/MooseX/Event.pm)
 - [MooseX::Role::Parameterized](http://search.cpan.org/~sartak/MooseX-Role-Parameterized-1.02/lib/MooseX/Role/Parameterized/Tutorial.pod)
 
+See also:
+
+[Joose](https://code.google.com/p/joose-js/), a javascript port of Moose.
+
 Why MooseX? Because the namespace MooseX/MooX is open to third-party projects/plugins/extensions. You can upgrade your Moo(se) class using other components if you want. And there is one gem called 'moose' :/
 
 THIS MODULE IS EXPERIMENTAL YET! BE CAREFUL!
