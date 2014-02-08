@@ -1,7 +1,16 @@
+#require 'simplecov'
+#SimpleCov.start do
+#	# add_filter '/spec/'
+#
+#	add_group 'core', 'lib'
+#	add_group 'test', 'spec'
+#end
 require 'simplecov'
-SimpleCov.start do
-	# add_filter '/spec/'
+require 'coveralls'
 
-	add_group 'core', 'lib'
-	add_group 'test', 'spec'
-end
+SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov::Formatter::HTMLFormatter,
+  Coveralls::SimpleCov::Formatter
+]
+SimpleCov.start
+# Coveralls.wear!
