@@ -14,5 +14,6 @@ SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
 ]
 SimpleCov.start do
   add_filter '/spec/'
+  add_group 'core', 'lib'
 end
 # Coveralls.wear!
