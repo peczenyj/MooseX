@@ -1,6 +1,6 @@
 # MooseX
 
-A postmodern object DSL for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX) [![Gem Version](https://badge.fury.io/rb/moosex.png)](http://badge.fury.io/rb/moosex) [![Code Climate](https://codeclimate.com/github/peczenyj/MooseX.png)](https://codeclimate.com/github/peczenyj/MooseX) [![Dependency Status](https://gemnasium.com/peczenyj/MooseX.png)](https://gemnasium.com/peczenyj/MooseX)
+A postmodern object DSL for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX) [![Gem Version](https://badge.fury.io/rb/moosex.png)](http://badge.fury.io/rb/moosex) [![Code Climate](https://codeclimate.com/github/peczenyj/MooseX.png)](https://codeclimate.com/github/peczenyj/MooseX) [![Dependency Status](https://gemnasium.com/peczenyj/MooseX.png)](https://gemnasium.com/peczenyj/MooseX) [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/f51f40f92298589b598a55bc753977f9 "githalytics.com")](http://githalytics.com/peczenyj/MooseX)
 
 ## Introduction
 
