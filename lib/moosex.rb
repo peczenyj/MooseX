@@ -7,6 +7,7 @@
 #
 require "moosex/version"
 require "moosex/types"
+require "weakref"
 
 module MooseX
 	@@MOOSEX_WARNINGS = true
@@ -311,6 +312,7 @@ module MooseX
 
 		attr_reader :attr_symbol, :is, :reader, :writter, :lazy, :builder, :methods
 		DEFAULTS= { 
+      weak: false,
 			lazy: false,
 			clearer: false,
 			required: false, 
@@ -463,6 +465,9 @@ module MooseX
 
 				coerce				
 			end,
+      weak: lambda do |weak, field_name|
+        !! weak
+      end,
 		};
 
 		def initialize(a, o ,x)
@@ -502,6 +507,13 @@ module MooseX
 				o[:builder] = nil
 			end
 
+      if o[:weak]
+        old_coerce = o[:coerce]
+        o[:coerce] = lambda do |value|
+          WeakRef.new old_coerce.call(value)
+        end
+      end
+
 			@attr_symbol = a
 			@is          = o.delete(:is)
 			@isa         = o.delete(:isa)
@@ -517,6 +529,7 @@ module MooseX
 			@init_arg    = o.delete(:init_arg)
 			@trigger     = o.delete(:trigger)
 			@coerce      = o.delete(:coerce)
+      @weak        = o.delete(:weak)
 			@methods     = {}
 
 			MooseX.warn "Unused attributes #{o} for attribute #{a} @ #{x} #{x.class}",caller() if ! o.empty?	
