@@ -1,8 +1,11 @@
+#
+# This example was ported from
+# https://metacpan.org/pod/Moose::Cookbook::Roles::Comparable_CodeReuse
+
 require 'moosex'
 
-
 module Eq
-	include MooseX.disable_warnings()
+	include MooseX.init( warnings: false)
 
 	requires :equal
 
@@ -20,7 +23,7 @@ end
 class Currency
 	include Valuable
 	include Eq  # will warn unless disable_warnings was called.
-                # to avoid warnings, you should include after  
+              # to avoid warnings, you should include after  
 	            # define all required modules,
 
 	def equal(other)
@@ -54,10 +57,14 @@ c1 = Currency.new( value: 12 )
 c2 = Currency.new( value: 12 )
 c3 = Currency.new( value: 24 )
 
-c1.equal(c2) # true
-c1.equal(c3) # false
+p c1.equal(c2) # true
+p c1.equal(c3) # false
 
-Comparator.new(compare_to: c1).no_equal(c2) # false
-Comparator.new(compare_to: c1).no_equal(c3) # true
+p Comparator.new(compare_to: c1).no_equal(c2) # false
+p Comparator.new(compare_to: c1).no_equal(c3) # true
 
-WrongClass.new(one: 1, two: 2) # will raise exception
+begin
+  WrongClass.new(one: 1, two: 2) # will raise exception
+rescue => e
+  puts "will raise exception #{e}"
+end

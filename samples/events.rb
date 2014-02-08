@@ -1,3 +1,7 @@
+#
+# This example was ported from
+# http://search.cpan.org/~winter/MooseX-Event-v0.2.0/lib/MooseX/Event.pm
+
 require 'moosex'
 require 'moosex/event'
 

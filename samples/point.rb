@@ -1,3 +1,7 @@
+#
+# This example was ported from
+# https://metacpan.org/pod/Moose::Cookbook::Basics::Point_AttributesAndSubclassing 
+
 require 'moosex'
 
 class Point
