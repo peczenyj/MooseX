@@ -1,4 +1,6 @@
 language: ruby
+before_install: gem install bundler
+script: "bundle exec rspec -r spec_helper"
 rvm:
   - 2.0.0
   - 2.1.0
