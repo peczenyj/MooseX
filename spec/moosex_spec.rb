@@ -5,6 +5,8 @@ class A
 	include MooseX
 
 	has :foo
+
+	has :bar, { doc: "bar..."}
 end
 
 describe "MooseX" do

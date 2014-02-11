@@ -322,6 +322,7 @@ module MooseX
       handles: {},
       trigger: lambda {|object,value|},  # TODO: implement
       coerce: lambda {|object| object},  # TODO: implement
+      doc: nil,
     }
 
     REQUIRED = []
@@ -469,6 +470,9 @@ module MooseX
       weak: lambda do |weak, field_name|
         !! weak
       end,
+      doc: lambda do |doc, field_name|
+        doc.to_s
+      end,
     };
 
     def initialize(a, o ,x)
@@ -515,23 +519,24 @@ module MooseX
         end
       end
 
-      @attr_symbol = a
-      @is          = o.delete(:is)
-      @isa         = o.delete(:isa)
-      @default     = o.delete(:default)
-      @required    = o.delete(:required) 
-      @predicate   = o.delete(:predicate)
-      @clearer     = o.delete(:clearer)
-      @handles     = o.delete(:handles)
-      @lazy        = o.delete(:lazy)
-      @reader      = o.delete(:reader)
-      @writter     = o.delete(:writter)
-      @builder     = o.delete(:builder)
-      @init_arg    = o.delete(:init_arg)
-      @trigger     = o.delete(:trigger)
-      @coerce      = o.delete(:coerce)
-      @weak        = o.delete(:weak)
-      @methods     = {}
+      @attr_symbol   = a
+      @is            = o.delete(:is)
+      @isa           = o.delete(:isa)
+      @default       = o.delete(:default)
+      @required      = o.delete(:required) 
+      @predicate     = o.delete(:predicate)
+      @clearer       = o.delete(:clearer)
+      @handles       = o.delete(:handles)
+      @lazy          = o.delete(:lazy)
+      @reader        = o.delete(:reader)
+      @writter       = o.delete(:writter)
+      @builder       = o.delete(:builder)
+      @init_arg      = o.delete(:init_arg)
+      @trigger       = o.delete(:trigger)
+      @coerce        = o.delete(:coerce)
+      @weak          = o.delete(:weak)
+      @documentation = o.delete(:doc)
+      @methods       = {}
 
       MooseX.warn "Unused attributes #{o} for attribute #{a} @ #{x} #{x.class}",caller() if ! o.empty?  
 

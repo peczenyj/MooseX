@@ -470,6 +470,14 @@ puts f.x       # may raise exception (recycled)
 
 You should verify with `weakref_alive?` method to avoid exceptions.
 
+Optional.
+
+## doc => String
+
+You can add a string metadata about the attribute. It will be stored, and you can use this in a near future.
+
+Optional.
+
 ## Hooks: after/before/around
 
 Another great feature imported from Moose are the hooks after/before/around one method. You can run an arbitrary code, for example:

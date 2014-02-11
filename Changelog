@@ -1,3 +1,5 @@
+	- has now has a doc attribute #57
+	- has now should not require :is => default is :rw #54
     - add weak ref support #49
 
 0.0.16 - 2013-02-07
