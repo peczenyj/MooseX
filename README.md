@@ -1,7 +1,8 @@
 # MooseX
 
-A postmodern object DSL for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX) [![Gem Version](https://badge.fury.io/rb/moosex.png)](http://badge.fury.io/rb/moosex) [![Code Climate](https://codeclimate.com/github/peczenyj/MooseX.png)](https://codeclimate.com/github/peczenyj/MooseX) [![Dependency Status](https://gemnasium.com/peczenyj/MooseX.png)](https://gemnasium.com/peczenyj/MooseX) [![Coverage Status](https://coveralls.io/repos/peczenyj/MooseX/badge.png)](https://coveralls.io/r/peczenyj/MooseX) [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/f51f40f92298589b598a55bc753977f9 "githalytics.com")](http://githalytics.com/peczenyj/MooseX)
+A postmodern object DSL for Ruby [![Build Status](https://travis-ci.org/peczenyj/MooseX.png)](https://travis-ci.org/peczenyj/MooseX) [![Gem Version](https://badge.fury.io/rb/moosex.png)](http://badge.fury.io/rb/moosex) [![Code Climate](https://codeclimate.com/github/peczenyj/MooseX.png)](https://codeclimate.com/github/peczenyj/MooseX) [![Dependency Status](https://gemnasium.com/peczenyj/MooseX.png)](https://gemnasium.com/peczenyj/MooseX) [![Coverage Status](https://coveralls.io/repos/peczenyj/MooseX/badge.png)](https://coveralls.io/r/peczenyj/MooseX) 
 
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/f51f40f92298589b598a55bc753977f9 "githalytics.com")](http://githalytics.com/peczenyj/MooseX)
 ## Introduction
 
 This is another DSL for object creation, aspects, method delegation and much more. It is based on Perl Moose and Moo, two important modules who add a better way of Object Orientation development (and I enjoy A LOT). Using a declarative style, using Moose/Moo you can create attributes, methods, the entire constructor and much more. But I can't find something similar in Ruby world, so I decide port a small subset of Moose to create a powerfull DSL for object construction.
