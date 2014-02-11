@@ -1,3 +1,4 @@
+0.0.17 - 2013-02-11
 	- has now support an override option #56
 	- has now support a doc option #57
 	- has now should not require :is => default is :rw #54
