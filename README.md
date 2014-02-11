@@ -148,7 +148,7 @@ The options for "has" are as follows:
 
 ### is => ro|rw|rwp|private|lazy
 
-**Required**, may be :ro, :rw, :rwp, :private or :lazy.
+**Important**, may be :ro, :rw, :rwp, :private or :lazy. If you not specify, we will consider :rw, with all acessors with public visibility (**NEW**).
 
 "ro" specify a read-only attribute - generate only the reader method - you should specify the value in the constructor or using "default".
 

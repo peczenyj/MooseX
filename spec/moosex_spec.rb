@@ -3,6 +3,8 @@ require 'moosex'
 
 class A
 	include MooseX
+
+	has :foo
 end
 
 describe "MooseX" do
@@ -13,5 +15,12 @@ describe "MooseX" do
 	it "should be possible create one single instance" do
 		a = A.new
 		a.is_a?(A).should be_true
+	end
+
+	it "should has an attribute foo" do
+		a = A.new(foo: 1)
+		a.foo.should == 1
+		a.foo = 6
+		a.foo.should == 6
 	end
 end
