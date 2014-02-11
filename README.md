@@ -953,6 +953,10 @@ Until the first 0.1 version I can change anything without warning.
 
 I am open to suggestions too.
 
+## Mailing List
+
+https://groups.google.com/d/forum/moosex-ruby-dev-list
+
 ## TODO
 
 1. Support to Roles ( it is a Module on Steroids ) [done] 
