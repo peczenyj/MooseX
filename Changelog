@@ -1,4 +1,5 @@
-	- has now has a doc attribute #57
+	- has now support an override option #56
+	- has now support a doc option #57
 	- has now should not require :is => default is :rw #54
     - add weak ref support #49
 

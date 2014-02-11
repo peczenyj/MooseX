@@ -138,6 +138,9 @@ module MooseX
     end
 
     def add(attr)
+      if @attrs.has_key?(attr.attr_symbol) && ! attr.override
+        raise FatalError, "#{attr.attr_symbol} already exists, you should specify override: true" 
+      end
       @attrs[attr.attr_symbol] = attr
     end
 
@@ -284,8 +287,9 @@ module MooseX
           has(attr, options)
         end
       else
-
         attr = MooseX::Attribute.new(attr_name, attr_options, self)
+
+        __meta.add(attr)
 
         attr.methods.each_pair do |method, proc|
           define_method method, &proc
@@ -297,8 +301,6 @@ module MooseX
           private attr.writter
           private attr.reader
         end
-
-        __meta.add(attr)
       end
     end
   end 
@@ -310,7 +312,7 @@ module MooseX
   class Attribute
     include MooseX::Types
 
-    attr_reader :attr_symbol, :is, :reader, :writter, :lazy, :builder, :methods
+    attr_reader :attr_symbol, :is, :reader, :writter, :lazy, :builder, :methods, :override
     DEFAULTS= { 
       is: :rw,
       weak: false,
@@ -323,6 +325,7 @@ module MooseX
       trigger: lambda {|object,value|},  # TODO: implement
       coerce: lambda {|object| object},  # TODO: implement
       doc: nil,
+      override: false,
     }
 
     REQUIRED = []
@@ -473,6 +476,9 @@ module MooseX
       doc: lambda do |doc, field_name|
         doc.to_s
       end,
+      override: lambda do |override, field_name|
+        !! override
+      end,
     };
 
     def initialize(a, o ,x)
@@ -536,6 +542,7 @@ module MooseX
       @coerce        = o.delete(:coerce)
       @weak          = o.delete(:weak)
       @documentation = o.delete(:doc)
+      @override      = o.delete(:override)
       @methods       = {}
 
       MooseX.warn "Unused attributes #{o} for attribute #{a} @ #{x} #{x.class}",caller() if ! o.empty?  

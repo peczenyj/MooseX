@@ -478,6 +478,10 @@ You can add a string metadata about the attribute. It will be stored, and you ca
 
 Optional.
 
+## override => true|false
+
+If you need override one attribute, you should use `override: true`, or MooseX will raise one exception. 
+
 ## Hooks: after/before/around
 
 Another great feature imported from Moose are the hooks after/before/around one method. You can run an arbitrary code, for example:

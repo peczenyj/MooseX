@@ -114,6 +114,7 @@ class Point3D < Point
 		is: :rw,      # Redefine attribute
 		isa: String,  # should be String
 		default: "5", # default value is "5" (constant)
+		override: true, # mandatory, or it will raise exception
 	}
 
 	has z: {
