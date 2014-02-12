@@ -18,7 +18,6 @@ module MooseX
         attr
       end
 
-      def name; raise "should implement method name!" ; end
       def default; nil; end
       def coerce(x,f); x ; end
       def validate(x,f);  end
@@ -119,10 +118,6 @@ module MooseX
           raise InvalidAttributeError, "cannot coerce field #{name} to a symbol for #{field_name}: #{e}"
         end
       end
-
-      def method_name(field_name)
-        raise "you should implement this method"
-      end
     end
 
     class Predicate
@@ -146,7 +141,7 @@ module MooseX
       def name; :handles ; end
       def default; {} ; end
 
-      def populate_handles(handles)
+      def populate_handles(handles, field_name)
         array_of_handles = handles
 
         unless array_of_handles.is_a? Array
@@ -181,7 +176,7 @@ module MooseX
       def coerce(handles, field_name)
 
         unless handles.is_a? Hash 
-          handles = populate_handles(handles)
+          handles = populate_handles(handles, field_name)
         end
 
         handles.map do |key,value|

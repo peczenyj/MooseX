@@ -1,4 +1,4 @@
-  - reduce internal complexity #51
+  - reduce internal complexity #51, #70
   - meta now has __moosex__ prefix #55
 
 0.0.17 - 2013-02-11
