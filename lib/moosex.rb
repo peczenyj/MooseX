@@ -41,7 +41,7 @@ module MooseX
     c.extend(MooseX::Core)
 
     def c.init(*args)
-      __meta.roles.each{|role| role.call(*args)}
+      __moosex__meta.roles.each{|role| role.call(*args)}
       
       self
     end
@@ -49,14 +49,14 @@ module MooseX
     def c.included(x)
       
       MooseX.included(x)
-      x.__meta.load_from(self.__meta)
+      x.__moosex__meta.load_from(self.__moosex__meta)
 
       return unless x.is_a? Class
 
-      x.__meta.load_hooks(self.__meta)
-      self.__meta.init_klass(x)
+      x.__moosex__meta.load_hooks(self.__moosex__meta)
+      self.__moosex__meta.init_klass(x)
 
-      x.__meta.requires.each do |method|
+      x.__moosex__meta.requires.each do |method|
         unless x.public_instance_methods.include? method
           MooseX.warn "you must implement method '#{method}' in #{x} #{x.class}: required"# if $MOOSEX_DEBUG
         end 
@@ -65,10 +65,10 @@ module MooseX
 
     meta = MooseX::Meta.new
 
-    unless c.respond_to? :__meta
+    unless c.respond_to? :__moosex__meta
       c.class_exec do 
-        define_singleton_method(:__meta) { meta }
-        define_singleton_method(:__meta_define_method) do |method_name, &proc| 
+        define_singleton_method(:__moosex__meta) { meta }
+        define_singleton_method(:__moosex__meta_define_method) do |method_name, &proc| 
           define_method(method_name, proc)
         end       
       end
@@ -81,18 +81,18 @@ module MooseX
         args = args[0]          
       end 
       
-      self.class.__meta().init(self, args || {})
+      self.class.__moosex__meta().init(self, args || {})
 
       self.BUILD() if self.respond_to? :BUILD
     end
 
     def c.inherited(subclass)
       subclass.class_exec do 
-        old_meta = subclass.__meta
+        old_meta = subclass.__moosex__meta
 
         meta = MooseX::Meta.new(old_meta)
 
-        define_singleton_method(:__meta) { meta }
+        define_singleton_method(:__moosex__meta) { meta }
       end       
     end   
           
@@ -179,7 +179,7 @@ module MooseX
         after  = @after[method_name]
         around = @around[method_name]
 
-        klass.__meta_define_method(method_name) do |*args, &proc|
+        klass.__moosex__meta_define_method(method_name) do |*args, &proc|
           before.each{|b| b.call(self,*args, &proc)}
           
           original = lambda do |object, *args, &proc| 
@@ -213,7 +213,7 @@ module MooseX
 
   module Core
     def on_init(&block)
-      __meta.add_role(block)
+      __moosex__meta.add_role(block)
     end
         
     def after(*methods_name, &block)
@@ -228,7 +228,7 @@ module MooseX
           end
         rescue => e
           MooseX.warn "unable to apply hook after in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class) 
-          __meta.add_after(method_name, block)
+          __moosex__meta.add_after(method_name, block)
         end
       end 
     end
@@ -244,7 +244,7 @@ module MooseX
           end
         rescue => e
           MooseX.warn "unable to apply hook before in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)  
-          __meta.add_before(method_name, block)     
+          __moosex__meta.add_before(method_name, block)     
         end 
       end
     end
@@ -265,7 +265,7 @@ module MooseX
           
         rescue => e
           MooseX.warn "unable to apply hook around in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)          
-          __meta.add_around(method_name, block)
+          __moosex__meta.add_around(method_name, block)
         end
       end 
     end
@@ -273,7 +273,7 @@ module MooseX
     def requires(*methods)
 
       methods.each do |method_name|
-        __meta.add_requires(method_name)
+        __moosex__meta.add_requires(method_name)
       end 
     end
 
@@ -289,7 +289,7 @@ module MooseX
       else
         attr = MooseX::Attribute.new(attr_name, attr_options, self)
 
-        __meta.add(attr)
+        __moosex__meta.add(attr)
 
         attr.methods.each_pair do |method, proc|
           define_method method, &proc
