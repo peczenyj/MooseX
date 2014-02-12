@@ -2,74 +2,82 @@ require 'moosex/types'
 require 'moosex/attribute/modifiers'
 
 module MooseX
-    class Attribute
+  class Attribute
     include MooseX::Types
 
-    attr_reader :attr_symbol, :is, :isa, :default, :required, :predicate,
-    :clearer, :handles, :lazy, :reader, :writter, :builder, :init_arg, :trigger,
-    :coerce, :weak, :doc, :methods, :override
+    attr_reader :attr_symbol, :methods, :attribute_map
+
+    def is       ; @attribute_map[:is] ; end
+    def writter  ; @attribute_map[:writter] ; end
+    def reader   ; @attribute_map[:reader] ; end
+    def override ; @attribute_map[:override] ; end
+    def doc      ; @attribute_map[:doc] ; end
+    def default  ; @attribute_map[:default] ; end
+
+    @@LIST_OF_PARAMETERS = [ 
+      [:is,        MooseX::AttributeModifiers::Is.new       ],
+      [:isa,       MooseX::AttributeModifiers::Isa.new      ],
+      [:default,   MooseX::AttributeModifiers::Default.new  ],
+      [:required,  MooseX::AttributeModifiers::Required.new ],
+      [:predicate, MooseX::AttributeModifiers::Predicate.new],
+      [:clearer,   MooseX::AttributeModifiers::Clearer.new  ],  
+      [:handles,   MooseX::AttributeModifiers::Handles.new  ], 
+      [:lazy,      MooseX::AttributeModifiers::Lazy.new     ], 
+      [:reader,    MooseX::AttributeModifiers::Reader.new   ], 
+      [:writter,   MooseX::AttributeModifiers::Writter.new  ], 
+      [:builder,   MooseX::AttributeModifiers::Builder.new  ], 
+      [:init_arg,  MooseX::AttributeModifiers::Init_arg.new ], 
+      [:trigger,   MooseX::AttributeModifiers::Trigger.new  ], 
+      [:coerce,    MooseX::AttributeModifiers::Coerce.new   ], 
+      [:weak,      MooseX::AttributeModifiers::Weak.new     ], 
+      [:doc,       MooseX::AttributeModifiers::Doc.new      ], 
+      [:override,  MooseX::AttributeModifiers::Override.new ],
+    ]
+
+    def self.register_new_parameter(parameter_name, obj)
+      unless @@LIST_OF_PARAMETERS.map{|tuple| tuple[0]}.include? parameter_name
+        @@LIST_OF_PARAMETERS << [parameter_name.to_sym, obj]
+      end
+    end
 
     def initialize(attr_symbol, options ,klass)
       @attr_symbol   = attr_symbol
-      
+      @attribute_map = {}
+
       init_internal_modifiers(options.clone, klass)
 
       generate_all_methods
     end
     
     def init_internal_modifiers(options, klass)
-
-      init_internal_modifiers_1(options)
-      
-      init_internal_modifiers_2(options)
+      @@LIST_OF_PARAMETERS.each do |tuple|
+        parameter, obj = tuple 
+        @attribute_map[parameter] = obj.process(options, @attr_symbol)
+      end
 
       MooseX.warn "Unused attributes #{options} for attribute #{@attr_symbol} @ #{klass} #{klass.class}",caller() if ! options.empty?  
-    end
-
-    def init_internal_modifiers_1(options)
-      @is            = Is.new.process(options, @attr_symbol)
-      @isa           = Isa.new.process(options, @attr_symbol)
-      @default       = Default.new.process(options, @attr_symbol)
-      @required      = Required.new.process(options, @attr_symbol)
-      @predicate     = Predicate.new.process(options, @attr_symbol)
-      @clearer       = Clearer.new.process(options, @attr_symbol)
-      @handles       = Handles.new.process(options, @attr_symbol)
-      @lazy          = Lazy.new.process(options, @attr_symbol) 
-      @reader        = Reader.new.process(options, @attr_symbol)      
-    end
-
-    def init_internal_modifiers_2(options)
-      @writter       = Writter.new.process(options, @attr_symbol)
-      @builder       = Builder.new.process(options, @attr_symbol) # TODO: warn if has builder and it is not lazy
-      @init_arg      = InitArg.new.process(options, @attr_symbol)
-      @trigger       = Trigger.new.process(options, @attr_symbol)
-      @coerce        = Coerce.new.process(options, @attr_symbol)
-      @weak          = Weak.new.process(options, @attr_symbol)
-      @doc           = Doc.new.process(options, @attr_symbol)
-      @override      = Override.new.process(options, @attr_symbol)      
     end
 
     def generate_all_methods
       @methods       = {}
 
-      if @reader 
-        @methods[@reader] = generate_reader
+      if @attribute_map[:reader] 
+        @methods[@attribute_map[:reader]] = generate_reader
       end
       
-      if @writter 
-        @methods[@writter] = generate_writter
+      if @attribute_map[:writter] 
+        @methods[@attribute_map[:writter]] = generate_writter
       end
 
       inst_variable_name = "@#{@attr_symbol}".to_sym
-      if @predicate
-        @methods[@predicate] = Proc.new do
+      if @attribute_map[:predicate]
+        @methods[@attribute_map[:predicate]] = Proc.new do
           instance_variable_defined? inst_variable_name
         end
       end
 
-      inst_variable_name = "@#{@attr_symbol}".to_sym
-      if @clearer
-        @methods[@clearer] = Proc.new do
+      if @attribute_map[:clearer]
+        @methods[@attribute_map[:clearer]] = Proc.new do
           if instance_variable_defined? inst_variable_name
             remove_instance_variable inst_variable_name
           end
@@ -80,7 +88,7 @@ module MooseX
     end
 
     def generate_handles(attr_symbol)
-      @handles.each_pair do | method, target_method |
+      @attribute_map[:handles].each_pair do | method, target_method |
         if target_method.is_a? Array
           original, currying = target_method
 
@@ -112,25 +120,25 @@ module MooseX
       value  = nil
       value_from_default = false
       
-      if args.has_key? @init_arg
-        value = args.delete(@init_arg)
-      elsif @default
-        value = @default.call
+      if args.has_key? @attribute_map[:init_arg]
+        value = args.delete(@attribute_map[:init_arg])
+      elsif @attribute_map[:default]
+        value = @attribute_map[:default].call
         value_from_default = true
-      elsif @required
+      elsif @attribute_map[:required]
         raise InvalidAttributeError, "attr \"#{@attr_symbol}\" is required"
       else
         return
       end
 
-      value = @coerce.call(value)   
+      value = @attribute_map[:coerce].call(value)   
       begin
-        @isa.call( value )
+        @attribute_map[:isa].call( value )
       rescue MooseX::Types::TypeCheckError => e
         raise MooseX::Types::TypeCheckError, "isa check for field #{attr_symbol}: #{e}"
       end
       unless value_from_default
-        @trigger.call(object, value)
+        @attribute_map[:trigger].call(object, value)
       end
       inst_variable_name = "@#{@attr_symbol}".to_sym
       object.instance_variable_set inst_variable_name, value
@@ -140,13 +148,13 @@ module MooseX
     def generate_reader
       inst_variable_name = "@#{@attr_symbol}".to_sym
       
-      builder    = @builder
+      builder    = @attribute_map[:builder]
       before_get = lambda {|object|  }
 
-      if @lazy
-        type_check = protect_isa(@isa, "isa check for #{inst_variable_name} from builder")
-        coerce     = @coerce
-        trigger    = @trigger
+      if @attribute_map[:lazy]
+        type_check = protect_isa(@attribute_map[:isa], "isa check for #{inst_variable_name} from builder")
+        coerce     = @attribute_map[:coerce]
+        trigger    = @attribute_map[:trigger]
         before_get = lambda do |object|
           return if object.instance_variable_defined? inst_variable_name
 
@@ -176,11 +184,11 @@ module MooseX
     end
     
     def generate_writter
-      writter_name       = @writter
+      writter_name       = @attribute_map[:writter]
       inst_variable_name = "@#{@attr_symbol}".to_sym
-      coerce     = @coerce
-      type_check = protect_isa(@isa, "isa check for #{writter_name}")
-      trigger    = @trigger
+      coerce             = @attribute_map[:coerce]
+      type_check         = protect_isa(@attribute_map[:isa], "isa check for #{writter_name}")
+      trigger            = @attribute_map[:trigger]
       Proc.new  do |value| 
         value = coerce.call(value)
         type_check.call( value )

@@ -1,10 +1,13 @@
 module MooseX
-  class Attribute
+  module AttributeModifiers
     module AttrBaseModifier
       def process(options, attr_symbol)
         @attr_symbol = attr_symbol
 
-        local_options = { name => default }.merge(options)
+        local_options = { 
+          name => default 
+        }.merge(options)
+        
         options.delete(name)
 
         return nil unless local_options.has_key?(name)
@@ -18,6 +21,7 @@ module MooseX
         attr
       end
 
+      def name; self.class.name.downcase.split("::").last.to_sym ; end
       def default; nil; end
       def coerce(x,f); x ; end
       def validate(x,f);  end
@@ -58,7 +62,6 @@ module MooseX
     class Is 
       include AttrBaseModifier
       include AttrCoerceToSymbol
-      def name; :is ; end
       def default; :rw ; end
       def validate(is, field_name) 
         unless [:rw, :rwp, :ro, :lazy, :private].include?(is)
@@ -81,14 +84,12 @@ module MooseX
 
     class Isa 
       include AttrBaseModifier
-      def name; :isa ; end
       def default; MooseX::Attribute.isAny ; end
       def coerce(isa, field_name); MooseX::Attribute.isType(isa); end
     end
 
     class Default
       include AttrBaseModifier
-      def name; :default ; end
       def coerce(default, field_name)
         if default.is_a?(Proc) || default.nil?
           return default 
@@ -100,7 +101,6 @@ module MooseX
     class Required
       include AttrBaseModifier
       include AttrCoerceToBoolean
-      def name; :required ; end
     end
 
     module AttrCoerceToMethodBasedOnFieldName
@@ -124,7 +124,6 @@ module MooseX
       include AttrBaseModifier
       include AttrCoerceToMethodBasedOnFieldName
 
-      def name; :predicate ; end
       def method_name(field_name); "has_#{field_name}?".to_sym ; end
     end       
 
@@ -132,13 +131,11 @@ module MooseX
       include AttrBaseModifier
       include AttrCoerceToMethodBasedOnFieldName
 
-      def name; :clearer ; end
       def method_name(field_name); "clear_#{field_name}!".to_sym ; end
     end
 
     class Handles
       include AttrBaseModifier
-      def name; :handles ; end
       def default; {} ; end
 
       def populate_handles(handles, field_name)
@@ -198,13 +195,11 @@ module MooseX
     class Lazy 
       include AttrBaseModifier
       include AttrCoerceToBoolean
-      def name; :lazy ; end
     end
 
     class Reader
       include AttrBaseModifier
-      include AttrCoerceToSymbol
-      def name; :reader ; end  
+      include AttrCoerceToSymbol 
       def default
         @attr_symbol
       end
@@ -213,7 +208,6 @@ module MooseX
     class Writter
       include AttrBaseModifier
       
-      def name; :writter ; end
       def default
         @attr_symbol.to_s.concat("=").to_sym
       end
@@ -228,17 +222,14 @@ module MooseX
       include AttrBaseModifier
       include AttrCoerceMethodToLambda
 
-      def name; :builder ; end
       def default
         "build_#{@attr_symbol}".to_sym
       end
     end
 
-    class InitArg
+    class Init_arg
       include AttrBaseModifier
       include AttrCoerceToSymbol
-
-      def name; :init_arg; end
 
       def default
         @attr_symbol
@@ -249,8 +240,6 @@ module MooseX
     class Trigger
       include AttrBaseModifier
       include AttrCoerceMethodToLambda
-
-      def name; :trigger; end
       
       def default
         lambda{|object, value| }
@@ -260,8 +249,6 @@ module MooseX
     class Coerce 
       include AttrBaseModifier
       include AttrCoerceMethodToLambda
-
-      def name; :coerce; end
 
       def default
         lambda {|object| object}
@@ -282,22 +269,16 @@ module MooseX
     class Weak
       include AttrBaseModifier
       include AttrCoerceToBoolean
-
-      def name; :weak ; end
     end
 
     class Doc
       include AttrBaseModifier
       include AttrCoerceToString
-
-      def name; :doc ; end
     end
 
     class Override
       include AttrBaseModifier
       include AttrCoerceToBoolean
-
-      def name; :override ; end
     end
   end
 end
