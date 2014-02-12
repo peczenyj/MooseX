@@ -5,36 +5,15 @@ module MooseX
     end
         
     def after(*methods_name, &block)
-      methods_name.each do |method_name|  
-        begin
-          __moosex__try_to_add_after_now(method_name, block)
-        rescue => e
-          MooseX.warn "unable to apply hook after in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class) 
-          __moosex__meta.add_after(method_name, block)
-        end
-      end 
+      __moosex__add_hooks(:after, methods_name, block, caller()) 
     end
 
     def before(*methods_name, &block)
-      methods_name.each do |method_name|
-        begin
-          __moosex__try_to_add_before_now(method_name, block)
-        rescue => e
-          MooseX.warn "unable to apply hook before in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)  
-          __moosex__meta.add_before(method_name, block)     
-        end 
-      end
+      __moosex__add_hooks(:before, methods_name, block, caller()) 
     end
 
     def around(*methods_name, &block)
-      methods_name.each do |method_name|          
-        begin
-          __moosex__try_to_add_around_now(method_name, block)
-        rescue => e
-          MooseX.warn "unable to apply hook around in #{method_name} @ #{self}: #{e}", caller() if self.is_a?(Class)          
-          __moosex__meta.add_around(method_name, block)
-        end
-      end 
+      __moosex__add_hooks(:around, methods_name, block, caller())
     end
 
     def requires(*methods)
@@ -58,6 +37,28 @@ module MooseX
     end
 
     private
+    def __moosex__add_hooks(hook, methods_name, block, c)
+      methods_name.each do |method_name|  
+        begin
+          __moosex__try_to_add_hook_now(hook, method_name, block)
+        rescue => e
+          MooseX.warn "unable to apply hook #{hook} in #{method_name} @ #{self}: #{e}", c if self.is_a?(Class) 
+          __moosex__meta.add_hook(hook, method_name, block)
+        end
+      end
+    end
+
+    def __moosex__try_to_add_hook_now(hook, method_name, block)
+      case hook 
+      when :before 
+        __moosex__try_to_add_before_now(method_name, block)
+      when :after
+        __moosex__try_to_add_after_now(method_name, block)
+      when :around
+        __moosex__try_to_add_around_now(method_name, block)
+      end  
+    end
+
     def __moosex__try_to_add_before_now(method_name, block)
       method = instance_method method_name
 
@@ -90,20 +91,24 @@ module MooseX
     end
 
     def __moosex__has(attr_name, attr_options)
-        attr = MooseX::Attribute.new(attr_name, attr_options, self)
+      attr = MooseX::Attribute.new(attr_name, attr_options, self)
 
-        __moosex__meta.add(attr)
+      __moosex__meta.add(attr)
 
-        attr.methods.each_pair do |method, proc|
-          define_method method, &proc
-        end
+      __moosex__create_methods(attr)
+    end
 
-        if attr.is.eql?(:rwp) 
-          private attr.writter
-        elsif attr.is.eql?(:private)
-          private attr.writter
-          private attr.reader
-        end
+    def __moosex__create_methods(attr)
+      attr.methods.each_pair do |method, proc|
+        define_method method, &proc
+      end
+
+      if attr.is.eql?(:rwp) 
+        private attr.writter
+      elsif attr.is.eql?(:private)
+        private attr.writter
+        private attr.reader
+      end
     end
   end
 end

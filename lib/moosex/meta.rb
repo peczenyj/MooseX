@@ -1,16 +1,19 @@
 module MooseX
 
   class Meta
-    attr_reader :attrs, :requires, :before, :after, :around, :roles
+    attr_reader :attrs, :requires, :hooks, :roles
 
     def initialize(old_meta=nil)
       @initialized = false
       @attrs    = {}
       @requires = []
       @roles    = []
-      @before   = Hash.new { |hash, key| hash[key] = [] }
-      @after    = Hash.new { |hash, key| hash[key] = [] }
-      @around   = Hash.new { |hash, key| hash[key] = [] }
+
+      @hooks = {
+        before: Hash.new { |hash, key| hash[key] = [] },
+        after:  Hash.new { |hash, key| hash[key] = [] },
+        around: Hash.new { |hash, key| hash[key] = [] },
+      }
 
       if old_meta
         old_meta.attrs.each_pair do |key, value|
@@ -28,15 +31,11 @@ module MooseX
     end
     
     def load_hooks(other_meta)
-      other_meta.before.each_pair do |m, b|
-        @before[m] += b.clone
+      other_meta.hooks.each_pair do |hook, data|
+        data.each_pair do |m, b|
+          @hooks[hook][m] += b.clone
+        end
       end
-      other_meta.after.each_pair do |m, b|
-        @after[m] += b.clone
-      end
-      other_meta.around.each_pair do |m, b|
-        @around[m] += b.clone
-      end             
     end
 
     def add(attr)
@@ -50,18 +49,10 @@ module MooseX
       @requires << method
     end
 
-    def add_before(method_name, block)
-      @before[method_name] << block.clone
+    def add_hook(hook, method, block)
+      @hooks[hook][method] << block.clone
     end
 
-    def add_after(method_name, block)
-      @after[method_name] << block.clone
-    end
-
-    def add_around(method_name, block)
-      @around[method_name] << block.clone
-    end
-    
     def add_role(block)
       @roles << block
     end
@@ -82,7 +73,7 @@ module MooseX
     def init_klass(klass)
       #return if @initialized
 
-      [@before.keys + @after.keys + @around.keys].flatten.uniq.each do |(method_name)|
+      @hooks.values.map {|h| h.keys }.flatten.uniq.each do |(method_name)|
         begin
           method = klass.instance_method method_name
         rescue => e
@@ -96,9 +87,9 @@ module MooseX
     private
     def __moosex__init_hooks(klass, method_name, method)
 
-      before = @before[method_name]
-      after  = @after[method_name]
-      around = @around[method_name]
+      before = @hooks[:before][method_name]
+      after  = @hooks[:after][method_name]
+      around = @hooks[:around][method_name]
 
       klass.__moosex__meta_define_method(method_name) do |*args, &proc|
         before.each{|b| b.call(self,*args, &proc)}
