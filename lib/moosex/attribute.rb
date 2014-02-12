@@ -5,7 +5,9 @@ module MooseX
     class Attribute
     include MooseX::Types
 
-    attr_reader :attr_symbol, :is, :reader, :writter, :lazy, :builder, :methods, :override
+    attr_reader :attr_symbol, :is, :isa, :default, :required, :predicate,
+    :clearer, :handles, :lazy, :reader, :writter, :builder, :init_arg, :trigger,
+    :coerce, :weak, :doc, :methods, :override
 
     def initialize(attr_symbol, options ,klass)
       @attr_symbol   = attr_symbol
@@ -43,7 +45,7 @@ module MooseX
       @trigger       = Trigger.new.process(options, @attr_symbol)
       @coerce        = Coerce.new.process(options, @attr_symbol)
       @weak          = Weak.new.process(options, @attr_symbol)
-      @documentation = Doc.new.process(options, @attr_symbol)
+      @doc           = Doc.new.process(options, @attr_symbol)
       @override      = Override.new.process(options, @attr_symbol)      
     end
 

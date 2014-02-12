@@ -14,9 +14,10 @@ require "moosex/attribute"
 require "weakref"
 
 module MooseX
+  @@ALIAS           = false
   @@MOOSEX_WARNINGS = true
   @@MOOSEX_FATAL    = false
-  
+
   def self.warn(x, *c)
     if @@MOOSEX_FATAL
       raise FatalError, "[MooseX] exception: #{x}",*c
@@ -32,6 +33,10 @@ module MooseX
     
     if args.has_key? :fatal
       @@MOOSEX_FATAL = !! args[:fatal]
+    end
+
+    if args.has_key? :meta
+      @@ALIAS = !! args[:meta]
     end
     
     self
@@ -56,7 +61,14 @@ module MooseX
     unless class_or_module.respond_to? :__moosex__meta
       meta = MooseX::Meta.new
 
-      class_or_module.define_singleton_method(:__moosex__meta) { meta }          
+      class_or_module.define_singleton_method(:__moosex__meta) { meta } 
+
+      if @@ALIAS
+        class_or_module.class_eval do 
+          class_or_module.define_singleton_method(:meta) { meta } 
+        end  
+        @@ALIAS = false
+      end  
     end
         
     def class_or_module.init(*args)
@@ -91,8 +103,7 @@ module MooseX
 
         other_class_or_module.__moosex__meta.verify_requires_for(other_class_or_module) 
 
-      end   
+      end 
     end
-
   end
 end

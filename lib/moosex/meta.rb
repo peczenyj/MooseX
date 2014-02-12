@@ -23,6 +23,10 @@ module MooseX
       end
     end
 
+    def show_docs
+      @attrs.map{|attr_symbol, attr| {attr_symbol => attr.doc }}.reduce(:merge)
+    end
+    
     def init_roles(*args)
       @roles.each do|role| 
         role.call(*args)
