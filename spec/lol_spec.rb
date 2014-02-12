@@ -13,6 +13,7 @@ class Lol
       default: 1,
       predicate: :can_haz_c?,     # custom predicate
       clearer: "desintegrate_c",  # force coerce to symbol
+      xxx: 1,
     }
 
 	has [:d, :e] => {
