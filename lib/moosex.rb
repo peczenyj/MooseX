@@ -4,7 +4,7 @@
 # Author::    Tiago Peczenyj  (mailto:tiago.peczenyj@gmail.com)
 # Copyright:: Copyright (c) 2014 Tiago Peczenyj
 # License::   MIT
-#
+
 require "moosex/version"
 require "moosex/types"
 require "weakref"
