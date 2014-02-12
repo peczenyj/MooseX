@@ -18,8 +18,11 @@ module MooseX
   @@MOOSEX_FATAL    = false
   
   def self.warn(x, *c)
-    raise FatalError, "[MooseX] exception: #{x}",*c if @@MOOSEX_FATAL
-    Kernel.warn("[MooseX] warning: #{x}") if @@MOOSEX_WARNINGS
+    if @@MOOSEX_FATAL
+      raise FatalError, "[MooseX] exception: #{x}",*c
+    elsif @@MOOSEX_WARNINGS
+      Kernel.warn("[MooseX] warning: #{x}") 
+    end
   end
   
   def self.init(args={})
@@ -34,42 +37,18 @@ module MooseX
     self
   end
 
-  def MooseX.included(c)
-  
-    c.extend(MooseX::Core)
+  def MooseX.included(class_or_module)
 
-    def c.init(*args)
-      __moosex__meta.roles.each{|role| role.call(*args)}
-      
-      self
-    end
-    
-    def c.included(x)
-      
-      MooseX.included(x)
-      x.__moosex__meta.load_from(self.__moosex__meta)
-
-      return unless x.is_a? Class
-
-      x.__moosex__meta.load_hooks(self.__moosex__meta)
-      self.__moosex__meta.init_klass(x)
-
-      x.__moosex__meta.requires.each do |method|
-        unless x.public_instance_methods.include? method
-          MooseX.warn "you must implement method '#{method}' in #{x} #{x.class}: required"# if $MOOSEX_DEBUG
-        end 
-      end     
-    end
+    class_or_module.extend(MooseX::Core)
 
     meta = MooseX::Meta.new
 
-    unless c.respond_to? :__moosex__meta
-      c.class_exec do 
-        define_singleton_method(:__moosex__meta) { meta }
-        define_singleton_method(:__moosex__meta_define_method) do |method_name, &proc| 
-          define_method(method_name, proc)
-        end       
-      end
+    unless class_or_module.respond_to? :__moosex__meta
+      class_or_module.define_singleton_method(:__moosex__meta) { meta }
+
+      class_or_module.define_singleton_method(:__moosex__meta_define_method) do |method_name, &proc| 
+        define_method(method_name, proc)
+      end               
     end
         
     def initialize(*args) 
@@ -78,20 +57,42 @@ module MooseX
       else
         args = args[0]          
       end 
-      
-      self.class.__moosex__meta().init(self, args || {})
+
+      self.class.__moosex__meta.init(self, args || {})
 
       self.BUILD() if self.respond_to? :BUILD
     end
 
-    def c.inherited(subclass)
-      subclass.class_exec do 
-        old_meta = subclass.__moosex__meta
+    def class_or_module.init(*args)
+      __moosex__meta.init_roles(*args)
+      
+      self
+    end
 
-        meta = MooseX::Meta.new(old_meta)
+    def class_or_module.inherited(subclass)
+      old_meta = subclass.__moosex__meta
 
-        define_singleton_method(:__moosex__meta) { meta }
-      end       
+      meta = MooseX::Meta.new(old_meta)
+
+      subclass.define_singleton_method(:__moosex__meta) { meta }
     end      
+    
+    def class_or_module.included(other_class_or_module)
+      
+      MooseX.included(other_class_or_module)
+
+      other_class_or_module.__moosex__meta.load_from(self)
+
+      if other_class_or_module.is_a? Class
+
+        other_class_or_module.__moosex__meta.load_from_klass(self)
+
+        self.__moosex__meta.init_klass(other_class_or_module) 
+
+        other_class_or_module.__moosex__meta.verify_requires_for(other_class_or_module) 
+
+      end   
+    end
+
   end
 end

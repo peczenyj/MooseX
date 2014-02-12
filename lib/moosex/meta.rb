@@ -1,7 +1,7 @@
 module MooseX
 
   class Meta
-    attr_reader :attrs, :requires, :hooks, :roles
+    attr_reader :attrs, :requires, :hooks
 
     def initialize(old_meta=nil)
       @initialized = false
@@ -23,14 +23,23 @@ module MooseX
       end
     end
 
-    def load_from(other_meta)
+    def init_roles(*args)
+      @roles.each do|role| 
+        role.call(*args)
+      end  
+    end
+
+    def load_from(module_or_class)
+      other_meta = module_or_class.__moosex__meta
       other_meta.attrs.each_pair do |key, value|
         @attrs[key] = value.clone
       end     
       @requires += other_meta.requires
     end
     
-    def load_hooks(other_meta)
+    def load_from_klass(klass)
+      other_meta = klass.__moosex__meta
+
       other_meta.hooks.each_pair do |hook, data|
         data.each_pair do |m, b|
           @hooks[hook][m] += b.clone
@@ -84,6 +93,13 @@ module MooseX
       end
     end
 
+    def verify_requires_for(x)
+      @requires.each do |method|
+        unless x.public_instance_methods.include? method
+          MooseX.warn "you must implement method '#{method}' in #{x} #{x.class}: required"# if $MOOSEX_DEBUG
+        end 
+      end
+    end
     private
     def __moosex__init_hooks(klass, method_name, method)
 
