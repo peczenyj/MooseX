@@ -474,7 +474,7 @@ Optional.
 
 ## doc => String
 
-You can add a string metadata about the attribute. It will be stored, and you can use this in a near future.
+You can add a string metadata about the attribute. If you include MooseX with `meta: true` you can inspect the list of attributes and documentation.
 
 Optional.
 
@@ -557,7 +557,47 @@ The around hook is agressive: it will substitute the original method for a lambd
 
 it is useful to manipulate the return value or argument list, add a begin/rescue block, aditional validations, etc, if you need.
 
+## MooseX.init
+
+The init method is useful to change some behavior of MooseX on the fly.
+
+### warnings => true|false
+
+will disable all warnings from MooseX. It is Global. Default is true.
+
+```ruby
+class X 
+  include MooseX.init(warnings: false)
+```
+
+### fatal => true|false
+
+all warnings will raise exceptions. It is Global. Default is false
+
+```ruby
+class X 
+  include MooseX.init(fatal: true)
+```
+
+### meta => Symbol|String|true|false
+
+will expose an alias for the class metadata in the class. If you use true, we will generate a method 'meta', if you provide a Symbol or String we will create a method with same name.
+
+```ruby
+class X 
+  include MooseX.init(meta: true)
+
+  has :foo, { is: :rw, doc => "this is foo"}
+end
+
+X.meta.info # will return { :foo => "this is foo" }
+```
+
+The metadata has two public methods: attrs and info. Be careful.
+
 ## MooseX::Types
+
+**WARNING** This will be extract for a parallel project/ gem!
 
 MooseX has a built-in type system to be helpful in many circunstances. How many times you need check if some argument is_a? Something? Or it respond_to? :some_method ? Now it is over. If you include the **MooseX::Types** module in your MooseX class you can use:
 
@@ -859,6 +899,8 @@ ex3 = BuildArgsExample2.new()    # x == 4, y == 8
 ```
 
 ## EVENTS
+
+**WARNING** This will be extract for a parallel project/ gem!
 
 MooseX has a built-in event system, and it should be useful if you want to avoid after/before hooks ( depends of what is your problem ).
 

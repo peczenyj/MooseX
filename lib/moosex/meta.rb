@@ -23,7 +23,7 @@ module MooseX
       end
     end
 
-    def show_docs
+    def info
       @attrs.map{|attr_symbol, attr| {attr_symbol => attr.doc }}.reduce(:merge)
     end
     

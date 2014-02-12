@@ -14,7 +14,7 @@ require "moosex/attribute"
 require "weakref"
 
 module MooseX
-  @@ALIAS           = false
+  @@ALIAS           = nil
   @@MOOSEX_WARNINGS = true
   @@MOOSEX_FATAL    = false
 
@@ -35,8 +35,8 @@ module MooseX
       @@MOOSEX_FATAL = !! args[:fatal]
     end
 
-    if args.has_key? :meta
-      @@ALIAS = !! args[:meta]
+    if args.has_key?(:meta) && !! args[:meta]
+      @@ALIAS = (args[:meta].is_a?(TrueClass))? :meta : args[:meta]
     end
     
     self
@@ -65,7 +65,7 @@ module MooseX
 
       if @@ALIAS
         class_or_module.class_eval do 
-          class_or_module.define_singleton_method(:meta) { meta } 
+          class_or_module.define_singleton_method(@@ALIAS) { meta } 
         end  
         @@ALIAS = false
       end  
