@@ -393,19 +393,17 @@ describe "MooseX::Types" do
 			expect {
 				Test.isTuple().call([1])
 			}.to raise_error(MooseX::Types::TypeCheckError,
-				"Tuple violation: size should be 0 instead 1")
+				/Tuple violation: size should be 0 instead 1/)
 			expect {
 				Test.isTuple(Integer).call([])
 			}.to raise_error(MooseX::Types::TypeCheckError,
-				"Tuple violation: size should be 1 instead 0")
+				/Tuple violation: size should be 1 instead 0/)
 			expect {
 				Test.isTuple().call(nil)
-			}.to raise_error(MooseX::Types::TypeCheckError,
-				"Type violation: value '' (NilClass) is not an instance of [Type Array]")							
+			}.to raise_error(MooseX::Types::TypeCheckError)
 			expect {
 				Test.isTuple(Integer, Symbol, Test.isAny, TrueClass).call([1,:symbol, nil, false])
-			}.to raise_error(MooseX::Types::TypeCheckError,
-				"Tuple violation: on position 3 caused by Type violation: value 'false' (FalseClass) is not an instance of [Type TrueClass]")					
+			}.to raise_error(MooseX::Types::TypeCheckError)
 		end
 	end
 
@@ -430,23 +428,19 @@ describe "MooseX::Types" do
 		it "should raise error" do
 			expect {
 				Test.isSet(Test.isArray(Test.isMaybe(Integer))).call(nil)
-			}.to raise_error(MooseX::Types::TypeCheckError, 
-				"Type violation: value '' (NilClass) is not an instance of [Type Array]")
+			}.to raise_error(MooseX::Types::TypeCheckError)
 
 			expect {
 				Test.isSet(Test.isArray(Test.isMaybe(Integer))).call([false])
-			}.to raise_error(MooseX::Types::TypeCheckError, 
-				"Set violation: caused by Type violation: value 'false' (FalseClass) is not an instance of [Type Array]")
+			}.to raise_error(MooseX::Types::TypeCheckError)
 
 			expect {
 				Test.isSet(Test.isArray(Test.isMaybe(Integer))).call([[false]])
-			}.to raise_error(MooseX::Types::TypeCheckError, 
-				"Set violation: caused by Array violation: caused by Maybe violation: caused by AnyOf Check violation: caused by [Type violation: value 'false' (FalseClass) is not an instance of [Type Integer], Constant violation: value 'false' (FalseClass) is not '' (NilClass)]")
+			}.to raise_error(MooseX::Types::TypeCheckError)
 
 			expect {
 				Test.isSet(Integer).call([1,2,2])
-			}.to raise_error(MooseX::Types::TypeCheckError, 
-				"Set violation: has one or more non unique elements: {2=>2} (value => count)")
+			}.to raise_error(MooseX::Types::TypeCheckError)
 		end
 	end
 

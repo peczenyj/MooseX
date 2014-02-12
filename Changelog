@@ -1,3 +1,5 @@
+	- meta now has __moosex__ prefix #55
+
 0.0.17 - 2013-02-11
 	- has now support an override option #56
 	- has now support a doc option #57

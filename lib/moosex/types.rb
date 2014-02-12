@@ -181,14 +181,43 @@ module MooseX
 
       def isTuple(*types)
 
-        createValidator "[Tuple [#{types.map{|t| t.to_s}.join ', '}]]" do |tuple|
-          isType(Array).call(tuple)
-
+        size_validation = lambda do |tuple|
           unless tuple.size == types.size
             raise TypeCheckError, "Tuple violation: size should be #{types.size} instead #{tuple.size}"
-          end
+          end              
+        end
 
-          types.each_index do |index|
+        individual_validations = create_individual_validations_for_tuples(types)
+
+        proc = isAllOf(
+            isType(Array),
+            size_validation,
+            *individual_validations,
+          )
+
+        createValidator("[Tuple [#{types.map{|t| t.to_s}.join ', '}]]", &proc)
+      end
+
+      def isSet(type=nil)
+        type = isAny if type.nil?
+
+        proc = isAllOf(
+            isArray(type),
+            lambda do |set|
+              if set.uniq.size != set.size
+                raise TypeCheckError, "Set violation: has one or more non unique elements"
+              end 
+            end,
+          )
+
+        createValidator("[Set #{type.to_s}]", &proc)
+      end
+
+      private
+      def create_individual_validations_for_tuples(types)
+        individual_validations = []
+        types.each_index do |index|        
+          individual_validations << lambda do |tuple|
             begin
               isType(types[index]).call(tuple[index])
             rescue TypeCheckError => e
@@ -197,28 +226,8 @@ module MooseX
           end
         end
 
-      end
-
-      def isSet(type=nil)
-        type = isAny if type.nil?
-
-        createValidator "[Set #{type.to_s}]" do |set|
-          isType(Array).call(set)
-
-          if set.uniq.size != set.size
-            duplicated = set.inject(Hash.new(0)) {|h,i| h[i] += 1; h }.select{|k,v| v > 1 }
-            raise TypeCheckError, "Set violation: has one or more non unique elements: #{duplicated} (value => count)"
-          end 
-
-          set.each do |item| 
-            begin
-              isType(type).call(item)
-            rescue TypeCheckError => e
-              raise TypeCheckError, "Set violation: caused by #{e}"
-            end
-          end
-        end
-      end 
+        individual_validations        
+      end      
 
     end
   end 
