@@ -37,32 +37,28 @@ module MooseX
     self
   end
 
+  def initialize(*args) 
+    if self.respond_to? :BUILDARGS
+      args = self.BUILDARGS(*args)
+    else
+      args = args[0]          
+    end 
+
+    self.class.__moosex__meta.init(self, args || {})
+
+    self.BUILD() if self.respond_to? :BUILD
+  end
+
   def MooseX.included(class_or_module)
 
     class_or_module.extend(MooseX::Core)
 
-    meta = MooseX::Meta.new
-
     unless class_or_module.respond_to? :__moosex__meta
-      class_or_module.define_singleton_method(:__moosex__meta) { meta }
+      meta = MooseX::Meta.new
 
-      class_or_module.define_singleton_method(:__moosex__meta_define_method) do |method_name, &proc| 
-        define_method(method_name, proc)
-      end               
+      class_or_module.define_singleton_method(:__moosex__meta) { meta }          
     end
         
-    def initialize(*args) 
-      if self.respond_to? :BUILDARGS
-        args = self.BUILDARGS(*args)
-      else
-        args = args[0]          
-      end 
-
-      self.class.__moosex__meta.init(self, args || {})
-
-      self.BUILD() if self.respond_to? :BUILD
-    end
-
     def class_or_module.init(*args)
       __moosex__meta.init_roles(*args)
       
@@ -87,7 +83,11 @@ module MooseX
 
         other_class_or_module.__moosex__meta.load_from_klass(self)
 
-        self.__moosex__meta.init_klass(other_class_or_module) 
+        self.__moosex__meta.init_klass(other_class_or_module).each_pair do |method_name, proc|
+          other_class_or_module.class_eval do 
+            define_method(method_name,&proc)
+          end  
+        end   
 
         other_class_or_module.__moosex__meta.verify_requires_for(other_class_or_module) 
 

@@ -67,7 +67,9 @@ module MooseX
     end
 
     def init(object, args)
-      @attrs.each_pair{ |symbol, attr| attr.init(object, args) }
+      @attrs.each_pair do |symbol, attr| 
+        attr.init(object, args)
+      end  
 
       MooseX.warn "unused attributes #{args} for #{object.class}", caller unless args.empty?  
 
@@ -80,16 +82,21 @@ module MooseX
     end
 
     def init_klass(klass)
-      #return if @initialized
-
-      @hooks.values.map {|h| h.keys }.flatten.uniq.each do |(method_name)|
+      @hooks.values.map {|h| h.keys }.flatten.uniq.map do |method_name|
         begin
-          method = klass.instance_method method_name
+          [ klass.instance_method(method_name), method_name ]
         rescue => e
           MooseX.warn "Unable to apply hooks (after/before/around) in #{klass}::#{method_name} : #{e}" # if $MOOSEX_DEBUG
-          next
-        end        
-        __moosex__init_hooks(klass,method_name, method)
+          nil
+        end
+      end.select do |value| 
+        !value.nil?
+      end.reduce({}) do |hash, tuple|
+        method, method_name = tuple
+
+        hash[method_name] = __moosex__init_hooks(method_name, method)
+
+        hash
       end
     end
 
@@ -101,19 +108,19 @@ module MooseX
       end
     end
     private
-    def __moosex__init_hooks(klass, method_name, method)
+    def __moosex__init_hooks(method_name, method)
 
       before = @hooks[:before][method_name]
       after  = @hooks[:after][method_name]
       around = @hooks[:around][method_name]
 
-      klass.__moosex__meta_define_method(method_name) do |*args, &proc|
+      original = lambda do |object, *args, &proc| 
+        method.bind(object).call(*args, &proc)
+      end 
+
+      lambda do |*args, &proc|
         before.each{|b| b.call(self,*args, &proc)}
         
-        original = lambda do |object, *args, &proc| 
-          method.bind(object).call(*args, &proc)
-        end 
-
         result = around.inject(original) do |lambda1, lambda2|
           lambda2.curry[lambda1] 
         end.call(self, *args, &proc)
@@ -122,7 +129,6 @@ module MooseX
         
         result
       end
-
     end
 
   end 
