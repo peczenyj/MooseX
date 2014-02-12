@@ -104,41 +104,41 @@ module MooseX
       def name; :required ; end
     end
 
-    class Predicate
-      include AttrBaseModifier
-      def name; :predicate ; end
-      def coerce(predicate, field_name) 
-        if ! predicate
-          return false
-        elsif predicate.is_a? TrueClass
-          return "has_#{field_name}?".to_sym
+    module AttrCoerceToMethodBasedOnFieldName
+      def coerce(x, field_name) 
+        if ! x
+          return x
+        elsif x.is_a? TrueClass
+          return method_name(field_name)
         end
-
+    
         begin
-          predicate.to_sym
+          x.to_sym
         rescue => e
-          raise InvalidAttributeError, "cannot coerce field predicate to a symbol for #{field_name}: #{e}"
+          # create a nested exception here
+          raise InvalidAttributeError, "cannot coerce field #{name} to a symbol for #{field_name}: #{e}"
         end
       end
+
+      def method_name(field_name)
+        raise "you should implement this method"
+      end
+    end
+
+    class Predicate
+      include AttrBaseModifier
+      include AttrCoerceToMethodBasedOnFieldName
+
+      def name; :predicate ; end
+      def method_name(field_name); "has_#{field_name}?".to_sym ; end
     end       
 
     class Clearer
       include AttrBaseModifier
+      include AttrCoerceToMethodBasedOnFieldName
+
       def name; :clearer ; end
-      def coerce(clearer, field_name) 
-        if ! clearer
-          return false
-        elsif clearer.is_a? TrueClass
-          return "clear_#{field_name}!".to_sym
-        end
-    
-        begin
-          clearer.to_sym
-        rescue => e
-          # create a nested exception here
-          raise InvalidAttributeError, "cannot coerce field clearer to a symbol for #{field_name}: #{e}"
-        end
-      end
+      def method_name(field_name); "clear_#{field_name}!".to_sym ; end
     end
 
     class Handles

@@ -7,35 +7,39 @@ module MooseX
 
     attr_reader :attr_symbol, :is, :reader, :writter, :lazy, :builder, :methods, :override
 
-    def initialize(attr_symbol, options_original ,klass)
-      options = options_original.clone
- 
+    def initialize(attr_symbol, options ,klass)
       @attr_symbol   = attr_symbol
-      @is            = Is.new.process(options, attr_symbol)
-      @isa           = Isa.new.process(options, attr_symbol)
-      @default       = Default.new.process(options, attr_symbol)
-      @required      = Required.new.process(options, attr_symbol)
-      @predicate     = Predicate.new.process(options, attr_symbol)
-      @clearer       = Clearer.new.process(options, attr_symbol)
-      @handles       = Handles.new.process(options, attr_symbol)
-      @lazy          = Lazy.new.process(options, attr_symbol) 
-      @reader        = Reader.new.process(options, attr_symbol)
-      @writter       = Writter.new.process(options, attr_symbol)
-      @builder       = Builder.new.process(options, attr_symbol) # warn if has builder and it is not lazy
-      @init_arg      = InitArg.new.process(options, attr_symbol)
-      @trigger       = Trigger.new.process(options, attr_symbol)
-      @coerce        = Coerce.new.process(options, attr_symbol)
-      @weak          = Weak.new.process(options, attr_symbol)
-      @documentation = Doc.new.process(options, attr_symbol)
-      @override      = Override.new.process(options, attr_symbol)
-      @methods       = {}
+      
+      init_internal_modifiers(options.clone, klass)
 
-      MooseX.warn "Unused attributes #{options} for attribute #{attr_symbol} @ #{klass} #{klass.class}",caller() if ! options.empty?  
-    
       generate_all_methods
     end
     
-    def generate_all_methods  
+    def init_internal_modifiers(options, klass)
+      @is            = Is.new.process(options, @attr_symbol)
+      @isa           = Isa.new.process(options, @attr_symbol)
+      @default       = Default.new.process(options, @attr_symbol)
+      @required      = Required.new.process(options, @attr_symbol)
+      @predicate     = Predicate.new.process(options, @attr_symbol)
+      @clearer       = Clearer.new.process(options, @attr_symbol)
+      @handles       = Handles.new.process(options, @attr_symbol)
+      @lazy          = Lazy.new.process(options, @attr_symbol) 
+      @reader        = Reader.new.process(options, @attr_symbol)
+      @writter       = Writter.new.process(options, @attr_symbol)
+      @builder       = Builder.new.process(options, @attr_symbol) # TODO: warn if has builder and it is not lazy
+      @init_arg      = InitArg.new.process(options, @attr_symbol)
+      @trigger       = Trigger.new.process(options, @attr_symbol)
+      @coerce        = Coerce.new.process(options, @attr_symbol)
+      @weak          = Weak.new.process(options, @attr_symbol)
+      @documentation = Doc.new.process(options, @attr_symbol)
+      @override      = Override.new.process(options, @attr_symbol)
+
+      MooseX.warn "Unused attributes #{options} for attribute #{@attr_symbol} @ #{klass} #{klass.class}",caller() if ! options.empty?  
+    end
+
+    def generate_all_methods
+      @methods       = {}
+
       if @reader 
         @methods[@reader] = generate_reader
       end
@@ -68,25 +72,29 @@ module MooseX
         if target_method.is_a? Array
           original, currying = target_method
 
-          @methods[method] = Proc.new do |*args, &proc|
-          
-            a1 = [ currying ]
-          
-            if currying.is_a?Proc
-              a1 = currying.call()
-            elsif currying.is_a? Array
-              a1 = currying.map{|c| (c.is_a?(Proc)) ? c.call : c }
-            end
-          
-            self.send(attr_symbol).send(original, *a1, *args, &proc)
-          end         
+          @methods[method] = generate_handles_with_currying(attr_symbol,original, currying)         
         else  
           @methods[method] = Proc.new do |*args, &proc|
             self.send(attr_symbol).send(target_method, *args, &proc)
           end
         end 
       end  
-    end        
+    end    
+
+    def generate_handles_with_currying(attr_symbol,original, currying)
+      Proc.new do |*args, &proc|
+
+        a1 = [ currying ]
+
+        if currying.is_a?Proc
+          a1 = currying.call()
+        elsif currying.is_a? Array
+          a1 = currying.map{|c| (c.is_a?(Proc)) ? c.call : c }
+        end
+
+        self.send(attr_symbol).send(original, *a1, *args, &proc)
+      end
+    end   
     
     def init(object, args)
       value  = nil
@@ -124,7 +132,7 @@ module MooseX
       before_get = lambda {|object|  }
 
       if @lazy
-        type_check = @isa
+        type_check = protect_isa(@isa, "isa check for #{inst_variable_name} from builder")
         coerce     = @coerce
         trigger    = @trigger
         before_get = lambda do |object|
@@ -132,12 +140,8 @@ module MooseX
 
           value = builder.call(object)
           value = coerce.call(value)
-          begin
-            type_check.call( value )
-          rescue MooseX::Types::TypeCheckError => e
-            raise MooseX::Types::TypeCheckError, "isa check for #{inst_variable_name} from builder: #{e}"
-          end
-
+          type_check.call( value )
+          
           trigger.call(object, value)
           object.instance_variable_set(inst_variable_name, value)         
         end
@@ -148,20 +152,26 @@ module MooseX
         instance_variable_get inst_variable_name 
       end
     end
+
+    def protect_isa(type_check, message)
+      lambda do |value|
+        begin
+          type_check.call( value )
+        rescue MooseX::Types::TypeCheckError => e
+          raise MooseX::Types::TypeCheckError, "#{message}: #{e}"
+        end
+      end 
+    end
     
     def generate_writter
       writter_name       = @writter
       inst_variable_name = "@#{@attr_symbol}".to_sym
       coerce     = @coerce
-      type_check = @isa
+      type_check = protect_isa(@isa, "isa check for #{writter_name}")
       trigger    = @trigger
       Proc.new  do |value| 
         value = coerce.call(value)
-        begin
-          type_check.call( value )
-        rescue MooseX::Types::TypeCheckError => e
-          raise MooseX::Types::TypeCheckError, "isa check for #{writter_name}: #{e}"
-        end
+        type_check.call( value )
         trigger.call(self,value)
         instance_variable_set inst_variable_name, value
       end
