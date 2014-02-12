@@ -22,6 +22,12 @@ class TestMeta2
   }
 end
 
+class TestMeta3 < TestMeta
+
+  has :lol, { doc: "lol"}
+end
+
+
 describe TestMeta do
   it "should has 'meta'" do
     TestMeta.respond_to?(:meta).should be_true
@@ -87,4 +93,12 @@ describe TestMeta2 do
     docs[:bar].should == "etc"
   end
 
+end
+
+describe TestMeta3 do
+  it "should inherit meta" do
+    TestMeta3.meta.info[:foo].should == ""
+    TestMeta3.meta.info[:bar].should == "etc"    
+    TestMeta3.meta.info[:lol].should == "lol"
+  end
 end

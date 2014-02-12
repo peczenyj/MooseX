@@ -65,7 +65,9 @@ module MooseX
 
       if @@ALIAS
         class_or_module.class_eval do 
-          class_or_module.define_singleton_method(@@ALIAS) { meta } 
+          class_or_module.define_singleton_method(@@ALIAS) do 
+            self.__moosex__meta
+          end
         end  
         @@ALIAS = false
       end  

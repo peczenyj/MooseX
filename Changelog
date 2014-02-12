@@ -1,3 +1,5 @@
+  - basic support to plugin #23
+
 0.0.18 - 2013-02-12
   - better meta #58
   - reduce internal complexity #51, #70

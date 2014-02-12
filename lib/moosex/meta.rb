@@ -1,13 +1,14 @@
 module MooseX
 
   class Meta
-    attr_reader :attrs, :requires, :hooks
+    attr_reader :attrs, :requires, :hooks, :plugins
 
     def initialize(old_meta=nil)
       @initialized = false
       @attrs    = {}
       @requires = []
       @roles    = []
+      @plugins  = []
 
       @hooks = {
         before: Hash.new { |hash, key| hash[key] = [] },
@@ -20,6 +21,7 @@ module MooseX
           @attrs[key] = value.clone
         end
         @requires = old_meta.requires.clone
+        @plugins  = old_meta.plugins.clone
       end
     end
 
@@ -39,6 +41,7 @@ module MooseX
         @attrs[key] = value.clone
       end     
       @requires += other_meta.requires
+      @plugins  += other_meta.plugins
     end
     
     def load_from_klass(klass)
@@ -49,6 +52,7 @@ module MooseX
           @hooks[hook][m] += b.clone
         end
       end
+      @plugins  += other_meta.plugins
     end
 
     def add(attr)
@@ -111,6 +115,11 @@ module MooseX
         end 
       end
     end
+
+    def add_plugin(plugin)
+      @plugins << plugin.to_sym
+    end
+
     private
     def __moosex__init_hooks(method_name, method)
 

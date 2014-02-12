@@ -34,25 +34,30 @@ module MooseX
       [:override,  MooseX::AttributeModifiers::Override.new ],
     ]
 
-    def self.register_new_parameter(parameter_name, obj)
-      unless @@LIST_OF_PARAMETERS.map{|tuple| tuple[0]}.include? parameter_name
-        @@LIST_OF_PARAMETERS << [parameter_name.to_sym, obj]
-      end
-    end
-
     def initialize(attr_symbol, options ,klass)
       @attr_symbol   = attr_symbol
       @attribute_map = {}
 
-      init_internal_modifiers(options.clone, klass)
+      init_internal_modifiers(options.clone, klass.__moosex__meta.plugins, klass)
 
       generate_all_methods
     end
     
-    def init_internal_modifiers(options, klass)
+    def init_internal_modifiers(options, plugins, klass)
       @@LIST_OF_PARAMETERS.each do |tuple|
         parameter, obj = tuple 
         @attribute_map[parameter] = obj.process(options, @attr_symbol)
+      end
+      
+      plugins.sort.uniq.each do |key|
+        begin
+          klass = MooseX::AttributeModifiers::ThirdParty.const_get(key.to_s.capitalize.to_sym)          
+          @attribute_map[key.to_sym] = klass.new.process(options, @attr_symbol)
+        rescue NameError => e
+          next
+        rescue => e
+          raise "Unexpected Error in #{key} #{@attr_symbol}: #{e}"  
+        end  
       end
 
       MooseX.warn "Unused attributes #{options} for attribute #{@attr_symbol} @ #{klass} #{klass.class}",caller() if ! options.empty?  
