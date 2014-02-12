@@ -6,6 +6,7 @@ module MooseX
     end
 
     class TypeCheckError < TypeError
+
     end
 
     module Core 
@@ -230,5 +231,7 @@ module MooseX
       end      
 
     end
+
   end 
-end
+
+end 
