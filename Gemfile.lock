@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    moosex (0.0.17)
+    moosex (0.0.18)
 
 GEM
   remote: https://rubygems.org/
