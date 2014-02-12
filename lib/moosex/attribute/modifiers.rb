@@ -145,37 +145,43 @@ module MooseX
       include AttrBaseModifier
       def name; :handles ; end
       def default; {} ; end
+
+      def populate_handles(handles)
+        array_of_handles = handles
+
+        unless array_of_handles.is_a? Array
+          array_of_handles = [ array_of_handles ]
+        end
+
+        handles = array_of_handles.map do |handle|
+
+          if handle == BasicObject
+            
+            raise InvalidAttributeError, "ops, should not use BasicObject for handles in #{field_name}"
+          
+          elsif handle.is_a? Class
+
+            handle = handle.public_instance_methods - handle.superclass.public_instance_methods
+          
+          elsif handle.is_a? Module
+            
+            handle = handle.public_instance_methods
+
+          end
+          
+          handle
+
+        end.flatten.reduce({}) do |hash, method_name|
+          hash.merge({ method_name => method_name })
+        end
+
+        handles
+      end
+
       def coerce(handles, field_name)
 
         unless handles.is_a? Hash 
-
-          array_of_handles = handles
-
-          unless array_of_handles.is_a? Array
-            array_of_handles = [ array_of_handles ]
-          end
-
-          handles = array_of_handles.map do |handle|
-
-            if handle == BasicObject
-              
-              raise InvalidAttributeError, "ops, should not use BasicObject for handles in #{field_name}"
-            
-            elsif handle.is_a? Class
-
-              handle = handle.public_instance_methods - handle.superclass.public_instance_methods
-            
-            elsif handle.is_a? Module
-              
-              handle = handle.public_instance_methods
-
-            end
-            
-            handle
-
-          end.flatten.reduce({}) do |hash, method_name|
-            hash.merge({ method_name => method_name })
-          end
+          handles = populate_handles(handles)
         end
 
         handles.map do |key,value|

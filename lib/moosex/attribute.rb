@@ -16,6 +16,15 @@ module MooseX
     end
     
     def init_internal_modifiers(options, klass)
+
+      init_internal_modifiers_1(options)
+      
+      init_internal_modifiers_2(options)
+
+      MooseX.warn "Unused attributes #{options} for attribute #{@attr_symbol} @ #{klass} #{klass.class}",caller() if ! options.empty?  
+    end
+
+    def init_internal_modifiers_1(options)
       @is            = Is.new.process(options, @attr_symbol)
       @isa           = Isa.new.process(options, @attr_symbol)
       @default       = Default.new.process(options, @attr_symbol)
@@ -24,7 +33,10 @@ module MooseX
       @clearer       = Clearer.new.process(options, @attr_symbol)
       @handles       = Handles.new.process(options, @attr_symbol)
       @lazy          = Lazy.new.process(options, @attr_symbol) 
-      @reader        = Reader.new.process(options, @attr_symbol)
+      @reader        = Reader.new.process(options, @attr_symbol)      
+    end
+
+    def init_internal_modifiers_2(options)
       @writter       = Writter.new.process(options, @attr_symbol)
       @builder       = Builder.new.process(options, @attr_symbol) # TODO: warn if has builder and it is not lazy
       @init_arg      = InitArg.new.process(options, @attr_symbol)
@@ -32,9 +44,7 @@ module MooseX
       @coerce        = Coerce.new.process(options, @attr_symbol)
       @weak          = Weak.new.process(options, @attr_symbol)
       @documentation = Doc.new.process(options, @attr_symbol)
-      @override      = Override.new.process(options, @attr_symbol)
-
-      MooseX.warn "Unused attributes #{options} for attribute #{@attr_symbol} @ #{klass} #{klass.class}",caller() if ! options.empty?  
+      @override      = Override.new.process(options, @attr_symbol)      
     end
 
     def generate_all_methods
