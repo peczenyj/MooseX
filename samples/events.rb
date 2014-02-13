@@ -20,7 +20,7 @@ class EventProcessor
   has event_handler: {
     is: :ro,
     isa: EventHandler,
-    default: lambda{ EventHandler.new },
+    default: -> { EventHandler.new },
     handles: {
       ping: { emit: :pinged },
       pong: { emit: :ponged },
