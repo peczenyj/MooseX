@@ -169,8 +169,8 @@ You can specify an optional type check for the attribute. Accepts a lambda, and 
 
 You can specify your own kind of type validation.
 ```ruby
-    isa: lambda do |new_value|
-      unless new_value.respond_to? :to_sym
+    isa: ->(value) do
+      unless value.respond_to? :to_sym
         raise "bar should respond to to_sym method!"
       end
     end,
@@ -207,7 +207,7 @@ Optional.
 You can try to coerce the attribute value by a lambda/method before the type check phase. For example you can do
 
 ```ruby
-  coerce: lambda{ |new_value| new_value.to_i },
+  coerce: ->(value) { value.to_i },
 ```
 
 or just
@@ -267,7 +267,7 @@ are equivalent. You can curry as many arguments as you can.
 ```ruby
   handles: {
     my_method_2: {
-     method2: [1, lambda{ 2 } ]   
+     method2: [1, ->{ 2 } ]   
     }
   },
 ```
@@ -306,8 +306,8 @@ are equivalent.
 You can specify one lambda or method name to be executed in each writter ( if coerce and type check does not raise any exception ). The trigger will be called in each setter and in the constructor if we do not use the default value. Useful to add a logging operation or some complex validation.
 
 ```ruby
-  trigger: lambda do |object, new_value| 
-    object.logger.log "change the attribute value to #{new_value}"
+  trigger: ->(this, new_value) do 
+    this.logger.log "change the attribute value to #{new_value}"
   end
 ```
 or
@@ -448,10 +448,13 @@ class Foo
   has x: {
     is: :rw,
     lazy: :true,
-    builder: lambda{ |foo| Some::Class.new } # you can ignore foo, or use it!
+    builder: ->(this) { Some::Class.new } # you can ignore foo, or use it!
   }
 end
 ```
+
+The difference between builder and default is: default is for initialization if you omit the value in the constructor and you can't access the object (it is not "created" yet), builder is for lazy attributes, when you call the reader method for the first time ( or after clear it ) we will initialize the attribute and you have access to the object (in this example using the parameter 'this' in the lambda or using a normal method).
+
 Optional.
 
 ### weak => true|false
@@ -475,13 +478,13 @@ You should verify with `weakref_alive?` method to avoid exceptions.
 
 Optional.
 
-## doc => String
+### doc => String
 
 You can add a string metadata about the attribute. If you include MooseX with `meta: true` you can inspect the list of attributes and documentation.
 
 Optional.
 
-## override => true|false
+### override => true|false
 
 If you need override one attribute, you should use `override: true`, or MooseX will raise one exception. 
 
@@ -537,10 +540,10 @@ class Point
     # do something
   end
 
-  before :my_method do |object, x|
+  before :my_method do |this, x|
     puts "#{Time.now} before my_method(#{x})"
   end
-  after :my_method do |object, x|
+  after :my_method do |this, x|
     puts "#{Time.now} after my_method(#{x})"
   end
 end
@@ -551,9 +554,9 @@ end
 The around hook is agressive: it will substitute the original method for a lambda. This lambda will receive the original method as a lambda, a reference for the object and the argument list, you shuld call the method_lambda using object + arguments
 
 ```ruby
-  around(:sum) do |method_lambda, object, a,b,c|
+  around(:sum) do |method_lambda, this, a,b,c|
     c = 0
-    result = method_lambda.call(object,a,b,c)
+    result = method_lambda.call(this,a,b,c)
     result + 1
   end
 ```
