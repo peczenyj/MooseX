@@ -20,7 +20,7 @@ module MooseX
     has listeners: {
       is: :private,
       isa: isArray(EventListener),
-      default: lambda{ [] },
+      default: ->{ [] },
     }
 
     def has_events

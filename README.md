@@ -55,7 +55,7 @@ class Point
   has y: {
     is: :rw,
     isa: Integer,
-    default: lambda { 0 }, # you should specify a lambda
+    default: -> { 0 }, # you should specify a lambda
   }
 
   def clear! 
@@ -184,7 +184,7 @@ You can specify an optional default value to one attribute. If we don't specify 
 ```
 or
 ```ruby
-  default: lambda{ MyObject.new },
+  default: -> { MyObject.new },
 ```
 
 ### required => true|false
@@ -972,7 +972,7 @@ class EventProcessor
   has event_handler: {
     is: :ro,
     isa: EventHandler,
-    default: lambda{ EventHandler.new }, # EventProcessor HAS ONE EventHandler
+    default: -> { EventHandler.new },    # EventProcessor HAS ONE EventHandler
     handles: {                           # Now, lets start to delegate and currying:
       ping: { emit: :pinged },           # ping() is the same of event_handler.emit(:pinged)
       pong: { emit: :ponged },           # pong(x) is the same of event_handler.emit(:pinged,x)
