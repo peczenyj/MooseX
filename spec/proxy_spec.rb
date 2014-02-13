@@ -5,7 +5,7 @@ class ProxyToTarget
 
   has target: {
     is:  :ro,
-    default: lambda { Target.new },  # default, new instace of Target
+    default: -> { Target.new },  # default, new instace of Target
     handles: {                       # handles is for delegation,
       my_method_x: :method_x,        # inject methods with new names 
       my_method_y: :method_y,        # old => obj.target.method_x , now => obj.my_method_x
@@ -13,19 +13,19 @@ class ProxyToTarget
         method_y: 1,                 # call obj.mymethod_z(2,3) is the equivalent to
       },                             # call obj.target.method_z(1,2,3)
       my_method_y_with_lambda: {     # currying!!!  
-        method_y: lambda{ 1 },       # call obj.mymethod_z(2,3) is the equivalent to
+        method_y: ->{ 1 },       # call obj.mymethod_z(2,3) is the equivalent to
       },                             # call obj.target.method_z(1,2,3)
       my_method_z_with_array: {
-        method_z: [1,lambda{ 2 } ,3]
+        method_z: [1,->{ 2 } ,3]
       },
       my_method_k_with_literal_array: {
         method_k: [[1,2,3]]
       },
       my_method_k_with_literal_array2: {
-        method_k: [ lambda{  [1,2,3] } ]
+        method_k: [ ->{  [1,2,3] } ]
       },
       my_method_k_with_literal_array3: {
-        method_k: lambda{  [[1,2,3]] } 
+        method_k: ->{  [[1,2,3]] } 
       }            
     }
   }
@@ -111,7 +111,7 @@ class ProxyToTargetUsingArrayOfMethods
 
   has targetz: {
     is:  :ro,
-    default: lambda { Target.new }, 
+    default: -> { Target.new }, 
     handles: [ 
       :method_x, :method_y      # will inject all methods with same name
     ] 
@@ -139,7 +139,7 @@ class ProxyToTargetUsingSingleMethod
 
   has target: {
     is:  :ro,
-    default: lambda { Target.new }, 
+    default: -> { Target.new }, 
     handles: "method_x"         # coerce to an array of symbols
   }
 end
@@ -158,7 +158,7 @@ class ProxyToTargetUsingModule
 
   has target: {
     is:  :ro,
-    default: lambda { Target.new }, 
+    default: -> { Target.new }, 
     handles: TargetModule          # will import all methods from module
   }
 end
@@ -184,7 +184,7 @@ class ProxyToTargetUsingClass
 
   has target: {
     is:  :ro,
-    default: lambda { Target.new }, 
+    default: -> { Target.new }, 
     handles: Target                   # will use only public methods on Target class
   }                                   # exclude methods from superclass
 end

@@ -191,7 +191,7 @@ describe "MooseX::Types" do
 				"AnyOf Check violation: caused by [Type violation: value '[]' (Array) is not an instance of [Type Fixnum], Type violation: value '[]' (Array) is not an instance of [Type String], Type violation: value '[]' (Array) is not an instance of [Type Symbol]]")
 
 			expect {
-					Test.isAnyOf(lambda {|x| raise "OPS"}).call(1)
+					Test.isAnyOf(->(x) {raise "OPS"}).call(1)
 				}.to raise_error(MooseX::Types::TypeCheckError,
 					'unexpected exception OPS')
 		end

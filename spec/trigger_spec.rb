@@ -19,8 +19,8 @@ class TriggerTest
 
 	has attr_with_default: {
 		is: :rw,
-		trigger: lambda do |object, new_value| 
-			object.logger.log "will update attr_with_trigger with new value #{new_value}"
+		trigger: ->(this, new_value) do
+			this.logger.log "will update attr_with_trigger with new value #{new_value}"
 		end,
 		default: 1,
 	}
@@ -28,7 +28,7 @@ class TriggerTest
 	has attr_lazy_trigger: {
 		is: :lazy,
 		trigger: :my_method,
-		builder: lambda{ |x| 1},
+		builder: ->(this) { 1 },
 	}
 
 	def my_method(new_value)

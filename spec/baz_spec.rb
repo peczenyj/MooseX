@@ -6,7 +6,7 @@ class Baz
 
     has bam: {
       is: :ro,             # read-only, you should specify in new only
-      isa: lambda do |bam| # you should add your own validator
+      isa: ->(bam) do      # you should add your own validator
           raise 'bam should be less than 100' if bam > 100
       end,
       required: true,

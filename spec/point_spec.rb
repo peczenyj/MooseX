@@ -13,7 +13,7 @@ class Point
 	has y: {
 		is: :rw,
 		isa: Integer,
-		default: lambda { 0 }, # you should specify a lambda
+		default: -> { 0 }, # you should specify a lambda
 	}
 	
 	has secret: {

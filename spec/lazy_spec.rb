@@ -17,14 +17,14 @@ class LazyFox
 
 	has lazy_attr_who_accepts_lambda: {
 		is: :lazy,
-		builder: lambda{ |object| object.something }
+		builder: ->(this){ this.something }
 	}
 
 	has lazy_with_default: {
 		is: :lazy,
 		default: 10,
 		clearer: true,
-		builder: lambda {|o| 1 },
+		builder: ->(this) { 1 },
 	}
 
 	has last_lazy_attr: {

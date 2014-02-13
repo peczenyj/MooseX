@@ -46,7 +46,7 @@ module MooseX
       def coerce(x, field_name)
         unless x.is_a? Proc
           x_name = x.to_sym
-          x = lambda do |object, *value|
+          x = ->(object, *value) do
             object.send(x_name,*value)
           end
         end
@@ -96,7 +96,7 @@ module MooseX
         if default.is_a?(Proc) || default.nil?
           return default 
         end  
-        return lambda { default }         
+        return -> { default }         
       end
     end
 
@@ -244,7 +244,7 @@ module MooseX
       include AttrCoerceMethodToLambda
       
       def default
-        lambda{|object, value| }
+        ->(object, value) { }
       end
     end
 
@@ -253,13 +253,13 @@ module MooseX
       include AttrCoerceMethodToLambda
 
       def default
-        lambda {|object| object}
+        ->(object) {object}
       end
 
       def update_options(options, name, attr)
         if options[:weak]
           old_coerce = attr
-          attr = lambda do |value|
+          attr = ->(value) do
             WeakRef.new old_coerce.call(value)
           end
         end

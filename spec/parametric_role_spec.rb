@@ -7,11 +7,11 @@ module Logabble
   has logger: {
     is: :ro,
     #isa: Logger,
-    default: lambda{ 
+    default: -> do 
       logger = Logger.new(STDOUT) 
       logger.level = Logger::INFO
       logger
-    },
+    end,
     handles: {
       log_info: :info, 
       log_warn: :warn, 

@@ -182,7 +182,7 @@ module MooseX
 
       def isTuple(*types)
 
-        size_validation = lambda do |tuple|
+        size_validation = ->(tuple) do
           unless tuple.size == types.size
             raise TypeCheckError, "Tuple violation: size should be #{types.size} instead #{tuple.size}"
           end              
@@ -204,7 +204,7 @@ module MooseX
 
         proc = isAllOf(
             isArray(type),
-            lambda do |set|
+            ->(set) do
               if set.uniq.size != set.size
                 raise TypeCheckError, "Set violation: has one or more non unique elements"
               end 
@@ -218,7 +218,7 @@ module MooseX
       def create_individual_validations_for_tuples(types)
         individual_validations = []
         types.each_index do |index|        
-          individual_validations << lambda do |tuple|
+          individual_validations << ->(tuple) do
             begin
               isType(types[index]).call(tuple[index])
             rescue TypeCheckError => e

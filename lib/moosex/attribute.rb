@@ -154,13 +154,13 @@ module MooseX
       inst_variable_name = "@#{@attr_symbol}".to_sym
       
       builder    = @attribute_map[:builder]
-      before_get = lambda {|object|  }
+      before_get = ->(object) { }
 
       if @attribute_map[:lazy]
         type_check = protect_isa(@attribute_map[:isa], "isa check for #{inst_variable_name} from builder")
         coerce     = @attribute_map[:coerce]
         trigger    = @attribute_map[:trigger]
-        before_get = lambda do |object|
+        before_get = ->(object) do
           return if object.instance_variable_defined? inst_variable_name
 
           value = builder.call(object)
@@ -172,14 +172,14 @@ module MooseX
         end
       end
 
-      Proc.new do 
+      -> do 
         before_get.call(self)
         instance_variable_get inst_variable_name 
       end
     end
 
     def protect_isa(type_check, message)
-      lambda do |value|
+      ->(value) do
         begin
           type_check.call( value )
         rescue MooseX::Types::TypeCheckError => e

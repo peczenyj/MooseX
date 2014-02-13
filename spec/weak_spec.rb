@@ -5,7 +5,7 @@ class WeakRefExample
 	include MooseX
 
 	has a: { is: :rw, weak: true }
-	has b: { is: :rw, weak: true, default: lambda{ Object.new } }
+	has b: { is: :rw, weak: true, default: -> { Object.new } }
 	has c: { is: :lazy, weak: true, clearer: true }
 
 	def build_c

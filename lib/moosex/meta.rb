@@ -127,11 +127,11 @@ module MooseX
       after  = @hooks[:after][method_name]
       around = @hooks[:around][method_name]
 
-      original = lambda do |object, *args, &proc| 
+      original = ->(object, *args, &proc) do
         method.bind(object).call(*args, &proc)
       end 
 
-      lambda do |*args, &proc|
+      ->(*args, &proc) do
         before.each{|b| b.call(self,*args, &proc)}
         
         result = around.inject(original) do |lambda1, lambda2|
