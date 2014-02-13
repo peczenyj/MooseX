@@ -131,6 +131,8 @@ class Foo
     isa: Integer,
     default: 0
   }
+  
+  has :another, is: :rw, isa: Integer, default: ->{ Object.new }
 end
 ``` 
 
