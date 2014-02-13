@@ -132,6 +132,7 @@ class Foo
     default: 0
   }
   
+  # you can declare inline too
   has :another, is: :rw, isa: Integer, default: ->{ Object.new }
 end
 ``` 
