@@ -5,6 +5,8 @@ A postmodern object DSL for Ruby [![Build Status](https://travis-ci.org/peczenyj
 
 This is another DSL for object creation, aspects, method delegation and much more. It is based on Perl Moose and Moo, two important modules who add a better way of Object Orientation development (and I enjoy A LOT). Using a declarative style, using Moose/Moo you can create attributes, methods, the entire constructor and much more. But I can't find something similar in Ruby world, so I decide port a small subset of Moose to create a powerfull DSL for object construction.
 
+Want to help? Install the gem `moosex` and start to use. If you find some issue, please assign to me :)
+
 Of course, there is few similar projects in ruby like 
 
 - [Virtus](https://github.com/solnic/virtus)
