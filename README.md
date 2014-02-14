@@ -666,9 +666,7 @@ class Point3D < Point
 
   has z: { is: :rw, required: true }
 
-  after :clear! do |object|
-    object.z = 0
-  end
+  after :clear! ->(this) { this.z = 0 }
 end
 ```
 
@@ -698,10 +696,10 @@ class Point
     # do something
   end
 
-  before :my_method do |this, x|
+  before :my_method ->(this, x) do
     puts "#{Time.now} before my_method(#{x})"
   end
-  after :my_method do |this, x|
+  after :my_method ->(this, x) do
     puts "#{Time.now} after my_method(#{x})"
   end
 end
@@ -712,7 +710,7 @@ end
 The around hook is agressive: it will substitute the original method for a lambda. This lambda will receive the original method as a lambda, a reference for the object and the argument list, you shuld call the method_lambda using object + arguments
 
 ```ruby
-  around(:sum) do |method_lambda, this, a,b,c|
+  around(:sum) ->(method_lambda, this, a,b,c) do
     c = 0
     result = method_lambda.call(this,a,b,c)
     result + 1
@@ -968,8 +966,8 @@ Parameterized roles is a good way of reuse code based on roles. For example, to 
 module EasyCrud
   include MooseX
   
-  on_init do |*attributes|
-    attributes.each do | attr |
+  on_init ->(*attributes) do
+    attributes.each ->(attr) do
       has attr, { is: :rw, predicate: "has_attr_#{attr}_or_not?" }
     end
   end
@@ -990,7 +988,7 @@ To combine one or more parameterized roles to another parameterized role you sho
 module Logabble2
   include MooseX
     
-  on_init do |args|
+  on_init ->(args) do
     args[:klass] = self
     include Logabble.init(args)
   end  
@@ -999,7 +997,7 @@ end
 module Logabble
   include MooseX
    
-  on_init do | args |
+  on_init ->(args) do
 
     klass  = args[:klass]    || self  # <= THIS will guarantee you will
     methods = args[:methods] || []    #    modify the right class
@@ -1083,11 +1081,11 @@ end
 
 e = Example.new
 
-e.on(:pinged) do |object|
+e.on(:pinged) ->(this) do
     puts "Ping!"
 end
 
-e.once(:pinged) do |object|
+e.once(:pinged) ->(this) do
     puts "Ping Once!"
 end
   
@@ -1100,7 +1098,7 @@ e.ping # will no longer print nothing
 
 # you can use arguments
 # consider you have one logger attribute in this example
-listener = e.on(:error) do |obj, message|
+listener = e.on(:error) ->(obj, message) do
     obj.logger.fatal("Error: #{message}")
 end
 
@@ -1148,11 +1146,11 @@ end
 
 ep = EventProcessor.new()
 
-ep.on_ping do |obj| 
+ep.on_ping ->(obj) do 
   puts "receive ping!"
 end
   
-ep.on_pong do |obj, message| 
+ep.on_pong ->(obj, message) do
   puts "receive pong with #{message}!"
 end  
 
