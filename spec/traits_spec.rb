@@ -59,7 +59,7 @@ module TestTrait
       is: :ro,
       default: true,
       traits: MooseX::Traits::Bool,
-      handles: [ :toggle!, :not, :set!, :unset! ],
+      handles: [ :toggle!, :not, :set!, :unset!, :value ],
     }
 
     def build_lazy_counter
@@ -191,6 +191,10 @@ describe TestTrait::MyHomePage do
     if !! page.bit # necessary!!!
       raise "should act as a false value"
     end
+
+    if page.value 
+      raise "should act as a false value"
+    end    
   end 
 end  
   

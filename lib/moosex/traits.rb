@@ -52,12 +52,8 @@ module MooseX
       end  
 
       def toggle!
-        @value = !@value
+        @value = self.not
         __setobj__(@value)
-      end
-
-      def not
-        ! @value
       end
 
       def set!
@@ -69,6 +65,14 @@ module MooseX
         @value = false
         __setobj__(@value)
       end
+
+      def not
+        ! @value
+      end
+
+      def value
+        ! self.not
+      end      
     end    
   end
 end
