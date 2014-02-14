@@ -47,7 +47,7 @@ module MooseX
         unless x.is_a? Proc
           x_name = x.to_sym
           x = ->(object, *value) do
-            object.send(x_name,*value)
+            object.__send__(x_name,*value)
           end
         end
 
@@ -281,6 +281,27 @@ module MooseX
     class Override
       include AttrBaseModifier
       include AttrCoerceToBoolean
+    end
+
+    class Traits
+      include AttrBaseModifier
+      def default; [] ; end
+      def coerce(traits,f)
+        original = ->(value) { value }
+
+        traits = [ traits ].flatten
+
+        return original if traits.empty?
+
+        trait1 = traits.first
+
+        ->(value) { 
+          trait1.new original.call value  
+        }
+      end
+      def validate(traits,f)
+        # TODO
+      end
     end
   end
 end

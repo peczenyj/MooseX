@@ -20,7 +20,8 @@ module MooseX
       [:default,   MooseX::AttributeModifiers::Default.new  ],
       [:required,  MooseX::AttributeModifiers::Required.new ],
       [:predicate, MooseX::AttributeModifiers::Predicate.new],
-      [:clearer,   MooseX::AttributeModifiers::Clearer.new  ],  
+      [:clearer,   MooseX::AttributeModifiers::Clearer.new  ],
+      [:traits,    MooseX::AttributeModifiers::Traits.new   ],        
       [:handles,   MooseX::AttributeModifiers::Handles.new  ], 
       [:lazy,      MooseX::AttributeModifiers::Lazy.new     ], 
       [:reader,    MooseX::AttributeModifiers::Reader.new   ], 
@@ -88,25 +89,28 @@ module MooseX
           end
         end
       end
-      
-      generate_handles @attr_symbol   
+
+      generate_handles @attr_symbol
     end
 
     def generate_handles(attr_symbol)
+
+      delegator = ->(this) { this.__send__(attr_symbol) }
+
       @attribute_map[:handles].each_pair do | method, target_method |
         if target_method.is_a? Array
-          original, currying = target_method
+          original_method, currying = target_method
 
-          @methods[method] = generate_handles_with_currying(attr_symbol,original, currying)         
+          @methods[method] = generate_handles_with_currying(delegator, original_method, currying)         
         else  
           @methods[method] = Proc.new do |*args, &proc|
-            self.send(attr_symbol).send(target_method, *args, &proc)
+            delegator.call(self).__send__(target_method, *args, &proc)
           end
         end 
       end  
     end    
 
-    def generate_handles_with_currying(attr_symbol,original, currying)
+    def generate_handles_with_currying(delegator, original_method, currying)
       Proc.new do |*args, &proc|
 
         a1 = [ currying ]
@@ -117,7 +121,7 @@ module MooseX
           a1 = currying.map{|c| (c.is_a?(Proc)) ? c.call : c }
         end
 
-        self.send(attr_symbol).send(original, *a1, *args, &proc)
+        delegator.call(self).__send__(original_method, *a1, *args, &proc)
       end
     end   
     
@@ -145,6 +149,7 @@ module MooseX
       unless value_from_default
         @attribute_map[:trigger].call(object, value)
       end
+      value = @attribute_map[:traits].call(value)
       inst_variable_name = "@#{@attr_symbol}".to_sym
       object.instance_variable_set inst_variable_name, value
     end
@@ -160,6 +165,7 @@ module MooseX
         type_check = protect_isa(@attribute_map[:isa], "isa check for #{inst_variable_name} from builder")
         coerce     = @attribute_map[:coerce]
         trigger    = @attribute_map[:trigger]
+        traits     = @attribute_map[:traits]
         before_get = ->(object) do
           return if object.instance_variable_defined? inst_variable_name
 
@@ -168,6 +174,7 @@ module MooseX
           type_check.call( value )
           
           trigger.call(object, value)
+          value = traits.call(value)
           object.instance_variable_set(inst_variable_name, value)         
         end
       end
@@ -194,10 +201,12 @@ module MooseX
       coerce             = @attribute_map[:coerce]
       type_check         = protect_isa(@attribute_map[:isa], "isa check for #{writter_name}")
       trigger            = @attribute_map[:trigger]
+      traits             = @attribute_map[:traits]
       Proc.new  do |value| 
         value = coerce.call(value)
         type_check.call( value )
         trigger.call(self,value)
+        value = traits.call(value)
         instance_variable_set inst_variable_name, value
       end
     end 

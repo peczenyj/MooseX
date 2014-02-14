@@ -11,6 +11,7 @@ require "moosex/exceptions"
 require "moosex/meta"
 require "moosex/core"
 require "moosex/attribute"
+require "moosex/traits"
 require "weakref"
 
 module MooseX
