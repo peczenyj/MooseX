@@ -12,9 +12,10 @@ Of course, there is few similar projects in ruby like
 
 But the objetive of MooseX is different: this is a toolbox to create Classes based on DSL, with unique features like
 
-- method delegation ( see 'handles')
+- method delegation and currying ( see 'handles')
 - lazy attributes
 - roles
+- traits
 - parameterized roles
 - composable type check
 - events
