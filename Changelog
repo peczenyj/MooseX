@@ -1,39 +1,40 @@
+0.0.19 - 2014-02-14
   - improvements in examples and internals
   - add basic suport to traits #24
   - basic support to plugin #23
 
-0.0.18 - 2013-02-12
+0.0.18 - 2014-02-12
   - better meta #58
   - reduce internal complexity #51, #70
   - meta now has __moosex__ prefix #55
 
-0.0.17 - 2013-02-11
+0.0.17 - 2014-02-11
   - has now support an override option #56
   - has now support a doc option #57
   - has now should not require :is => default is :rw #54
     - add weak ref support #49
 
-0.0.16 - 2013-02-07
+0.0.16 - 2014-02-07
     - add currying to handles #46
     - not after/before/around works well with methods who receive a block
 
-0.0.15 - 2013-02-07
+0.0.15 - 2014-02-07
     - after, before, around now accept more than one method name
     - add basic event support #45
     - add parametric roles #44
     - add init method to enable warnings and exceptions #43
 
-0.0.14 - 2013-02-05
+0.0.14 - 2014-02-05
   - roles with around/before/after basic support #41
 
-0.0.13 - 2013-02-05
+0.0.13 - 2014-02-05
   - change around to receive a lambda #42
 
-0.0.12 - 2013-02-05
+0.0.12 - 2014-02-05
   - basic support override attributes #19
   - basic support to roles #17
 
-0.0.11 - 2013-02-04
+0.0.11 - 2014-02-04
   - basic support to after/before/around #12
   - improve exception #15
   - improve type system via MooseX::Types #16

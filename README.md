@@ -579,6 +579,30 @@ Similar to RescueToNil, but return 0 in case of `NoMethodError`.
 
 Similar to RescueToNil, but return empty string "" in case of `NoMethodError`. 
 
+##### Create your own trait
+
+You should create a Class with a constructor who will receive a reference to the value. For example, the trait Counter is using SimpleDelegator:
+
+```ruby
+require 'delegate' # to use SimpleDelegator
+
+module MooseX
+  module Traits
+    class Counter < SimpleDelegator
+      def initialize(value)
+        @value = value
+        super(@value)
+      end
+
+      def inc(by=1)
+        @value += by
+        __setobj__(@value)
+        @value
+      end
+...
+```
+You can create or extend your own Traits too. It is easy.
+
 ##### Composable Traits
 
 It is easy compose traits, for example:
