@@ -14,8 +14,8 @@ But the objetive of MooseX is different: this is a toolbox to create Classes bas
 
 - method delegation and currying ( see 'handles')
 - lazy attributes
-- roles
-- traits
+- roles / abstract classes / interfaces
+- traits / monads
 - parameterized roles
 - composable type check
 - events
