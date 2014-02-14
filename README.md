@@ -30,7 +30,7 @@ This rubygem is based on this modules:
 - [MooseX::Role::Parameterized](http://search.cpan.org/~sartak/MooseX-Role-Parameterized-1.02/lib/MooseX/Role/Parameterized/Tutorial.pod)
 
 See also:
-
+- [Reindeer](https://github.com/broquaint/reindeer), another Moose port to Ruby (still on 0.0.1 version)
 - [Joose](https://code.google.com/p/joose-js/), a javascript port of Moose.
 - [Perl 6](http://en.wikipedia.org/wiki/Perl_6#Object-oriented_programming) Perl 6 OO programming style.
 
@@ -241,6 +241,8 @@ If you need rename the method, you can specify a Hash:
     my_method_2: :method2,
   },
 ```
+
+handles is similar to [Forwardable](http://ruby-doc.org/stdlib-2.1.0/libdoc/forwardable/rdoc/Forwardable.html) module, the difference is the currying support and it is integrate with the has method/endpoint. If you want to use Forwardable, please use the reader method name instead the attribute name with @.
 
 Optional.
 #### Currying
@@ -487,6 +489,137 @@ Optional.
 ### override => true|false
 
 If you need override one attribute, you should use `override: true`, or MooseX will raise one exception. 
+
+### traits => Trait|[Array of Traits]
+
+The objective of use traits is extends the original attribute, using delegators. We support few traits at this moment and, **Important**, if you set a list of Traits we will apply each trait in sequence. Have a Suggestion? Open an Issue on Github!
+
+#### Trait Counter
+
+```ruby
+class MyHomePage
+  include MooseX::Types
+
+  has :counter, {
+    is: :ro,
+    isa: Integer,
+    default: 0,
+    traits: MooseX::Traits::Counter,
+    handles: {
+      increase_counter: :inc,
+      decrease_counter: :dec,
+      reset_counter_to_zero!: :reset,
+    }
+  }
+```
+
+In this example, the class MyHomePage has one attribute counter, Integer, and you can increase and decrease the counter value (or reset to zero) using `increase_counter`, `decrease_counter` and `reset_counter_to_zero!` methods. Without the trait `Counter` you should create this three methods and set the visibility to `:rwp` to be able to access the value, do some math and save. In this example, `MooseX::Traits::Counter` is a SimpleDelegator who act as a wrapper to the original value and act as a proxy for all methods except `inc`, `dec` and `reset`. 
+
+We apply the traits list on default values, constructor and writter, after type check and coerce, and it is useful to extend the behavior of the attribute. In this case, 0 is a Immutable object, we can't increase the value using some method (different than String, when you use methods like `capitalize!`) but we can use a Delegator to act as a proxy and increase/decrease the value.
+
+#### Trait Bool
+
+Another example, using mutable boolean values:
+
+```ruby
+  has bit: {
+    is: :ro,
+    default: true,
+    traits: MooseX::Traits::Bool,
+    handles: [ :toggle!, :value ],
+  }
+```
+
+In this case, we have a bit, and this bit is turn on (true). It is read-only so you can't set the bit. But using `toggle!` we can turn true => false and false => true. To access the original boolean value we should use !! ( to coerce to a true|false value ) or we can access the `value` method. It is mandatory if you want to use in if/unless statements. Of course you can change the name of each method.
+
+#### Trait Pair
+
+Sometimes we need store an array of fixed size and each element has an identity. For example, we should store arrays as tuples, or pairs. Of course we can create an object to be more clear, but we have this option and, sometimes, it is useful. Now, consider this example:
+
+```ruby
+  has array_with_surname_name: {
+    is: :private,
+    isa: Array, # or isTuple(String, String) if you include MooseX::Types
+    traits: [ MooseX::Traits::Pair ],
+    handles: {
+      :surname          => :first,
+      :surname=         => :first=,
+      :name             => :second,
+      :name=            => :second=,
+      :surname_and_name =>  { join: ->{","} }
+    },
+    required: true,
+  }
+```  
+
+We store surname and name as a tuple of Strings. Instead access `array_with_surname_name[0]` or `array_with_surname_name[1]`, we can apply the Trait `Pair`, and access (or save!) each component of this pair, but you can't change the pair itself. Look the example of currying in `surname_and_name`, calling join with "," as an argument.
+
+#### Trait RescueToNil
+
+The objective of `MooseX::Traits::RescueToNil` is avoid `NoMethodError` if, for example, you set nil as value. For example:
+
+```ruby
+  has important: {
+    is: :rw,
+    default: 0,
+    traits: MooseX::Traits::RescueToNil,
+    handles: {
+      plus: :+,
+      minus: :-,
+    }
+  }
+```    
+Imagine you can accept nil as a valid value. In this case, you can't use `+` or `-`, right? It will raise a NoMethodError. Well... you can avoid this with RescueToNil trait. Using this, we will return  `nil` for each operation in case of NoMethodError, and raise other kinds of exceptions.
+
+#### Trait RescueToZero
+
+Similar to RescueToNil, but return 0 in case of `NoMethodError`.
+
+#### Trait RescueToEmptyString
+
+Similar to RescueToNil, but return empty string "" in case of `NoMethodError`. 
+
+##### Composable Traits
+
+It is easy compose traits, for example:
+
+```ruby
+class ComplexExample
+  include MooseX
+  include MooseX::Types
+
+  has surname_name: {
+    is: :rw,
+    isa: isMaybe(isTuple(String, String)),
+    default: nil,
+    traits: [ MooseX::Traits::RescueToEmptyString, MooseX::Traits::Pair ],
+    handles: {
+      surname: :first,
+      name: :second,
+      :surname= => :first=,
+      :name= => :second=,
+      surname_and_name: { join: ->{", "} }
+    }
+  }
+```
+First, we apply `RescueToEmptyString`, then `Pair`. In this case, if you set `nil`, name and surname will act as empty string values. For example:
+
+```ruby
+ce = ComplexExample.new(surname_name: nil)
+ce.name                     # => ""
+ce.surname_and_name         # => ", "
+
+ce.name= "Isaac"
+ce.surname_and_name         # => ", Isaac"
+ce.surname= "Asimov"
+ce.surname_and_name         # => "Asimov, Isaac"
+
+ce.surname_name= nil
+ce.name                     # => ""    
+ce.surname_and_name         # => ", "
+```
+
+In this example it is safe set nil to `surname_name`. when we try to create the Pair, the [0] and [1] calls will return "", and we have one pair ["", ""]. This is why we add RescueToEmptyString first. If we use Pair as first trait, Pair expects an array, not a nil. *The Order is Important*.
 
 ## Hooks: after/before/around
 

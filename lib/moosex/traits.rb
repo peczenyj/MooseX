@@ -31,7 +31,7 @@ module MooseX
       attr_reader :first, :second
 
       def initialize(pair)
-        @first, @second = pair
+        @first, @second = pair[0], pair[1]
         super([@first, @second ])
       end
 
@@ -73,6 +73,43 @@ module MooseX
       def value
         ! self.not
       end      
-    end    
+    end  
+
+    class RescueToNil < SimpleDelegator
+
+      def initialize(value)
+        @value = value
+        @default_value = -> { nil }
+        __setobj__(@value)
+      end
+
+      def method_missing(m, *args, &block)
+        begin
+          super(m, *args, &block)
+        rescue NoMethodError
+          @default_value.call
+        rescue Exception
+          raise
+        end  
+      end
+    end
+
+    class RescueToZero < RescueToNil
+
+      def initialize(value)
+        super(value)
+        @default_value = ->{ 0 }
+      end
+
+    end 
+
+    class RescueToEmptyString < RescueToNil
+
+      def initialize(value)
+        super(value)
+        @default_value = -> { "" }
+      end
+
+    end        
   end
 end
