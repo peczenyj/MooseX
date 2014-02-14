@@ -87,7 +87,7 @@ module MooseX
         begin
           super(m, *args, &block)
         rescue NoMethodError
-          @default_value.call
+          @default_value[]
         rescue Exception
           raise
         end  

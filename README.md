@@ -493,7 +493,7 @@ If you need override one attribute, you should use `override: true`, or MooseX w
 
 ### traits => Trait|[Array of Traits]
 
-The objective of use traits is extends the original attribute, using delegators. We support few traits at this moment and, **Important**, if you set a list of Traits we will apply each trait in sequence. Have a Suggestion? Open an Issue on Github!
+The objective of use traits is extends the original attribute, using delegators (think in Monads). We support few traits at this moment and, **Important**, if you set a list of Traits we will apply each trait in sequence. Have a Suggestion? Open an Issue on Github!
 
 #### Trait Counter
 

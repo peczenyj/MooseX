@@ -116,9 +116,9 @@ module MooseX
         a1 = [ currying ]
 
         if currying.is_a?Proc
-          a1 = currying.call()
+          a1 = currying[]
         elsif currying.is_a? Array
-          a1 = currying.map{|c| (c.is_a?(Proc)) ? c.call : c }
+          a1 = currying.map{|c| (c.is_a?(Proc)) ? c[] : c }
         end
 
         delegator.call(self).__send__(original_method, *a1, *args, &proc)
