@@ -43,6 +43,32 @@ module MooseX
         @second = second_value
         __setobj__([@first, @second ])
       end      
+    end
+
+    class Bool < SimpleDelegator
+      def initialize(value)
+        @value = value
+        super(value)
+      end  
+
+      def toggle!
+        @value = !@value
+        __setobj__(@value)
+      end
+
+      def not
+        ! @value
+      end
+
+      def set!
+        @value = true
+        __setobj__(@value)
+      end
+
+      def unset!
+        @value = false
+        __setobj__(@value)
+      end
     end    
   end
 end

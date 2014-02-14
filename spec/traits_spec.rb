@@ -55,6 +55,13 @@ module TestTrait
       }
     }
 
+    has bit: {
+      is: :ro,
+      default: true,
+      traits: MooseX::Traits::Bool,
+      handles: [ :toggle!, :not, :set!, :unset! ],
+    }
+
     def build_lazy_counter
       0
     end
@@ -163,6 +170,27 @@ describe TestTrait::MyHomePage do
     expect { 
       page.surname_name.count.should == 2
     }.to raise_error(NoMethodError)
+  end
+  
+  it "bit should act as a boolean" do
+    page = TestTrait::MyHomePage.new
+    page.bit.should == true
+    page.toggle!
+    page.bit.should == false
+    page.not.should == true
+    
+    page.set!
+    page.bit.should == true
+
+    unless page.bit
+      raise "should act as a true value"
+    end
+    page.unset!
+    page.bit.should == false
+
+    if !! page.bit # necessary!!!
+      raise "should act as a false value"
+    end
   end 
 end  
   
