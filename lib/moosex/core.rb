@@ -99,8 +99,10 @@ module MooseX
     end
 
     def __moosex__create_methods(attr)
-      attr.methods.each_pair do |method, proc|
-        define_method method, &proc
+      attr.methods.each_pair do |method, block|
+        define_method method do |*args|
+          block.call(self, *args)
+        end 
       end
 
       if attr.is.eql?(:rwp) 

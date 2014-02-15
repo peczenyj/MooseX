@@ -3,6 +3,9 @@ module MooseX
     module ThirdParty
     end
     module AttrBaseModifier
+      def initialize(attrs)
+        @attrs=attrs
+      end
       def process(options, attr_symbol)
         @attr_symbol = attr_symbol
 

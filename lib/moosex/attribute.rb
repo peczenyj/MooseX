@@ -15,24 +15,24 @@ module MooseX
     def default  ; @attribute_map[:default] ; end
 
     @@LIST_OF_PARAMETERS = [ 
-      [:is,        MooseX::AttributeModifiers::Is.new       ],
-      [:isa,       MooseX::AttributeModifiers::Isa.new      ],
-      [:default,   MooseX::AttributeModifiers::Default.new  ],
-      [:required,  MooseX::AttributeModifiers::Required.new ],
-      [:predicate, MooseX::AttributeModifiers::Predicate.new],
-      [:clearer,   MooseX::AttributeModifiers::Clearer.new  ],
-      [:traits,    MooseX::AttributeModifiers::Traits.new   ],        
-      [:handles,   MooseX::AttributeModifiers::Handles.new  ], 
-      [:lazy,      MooseX::AttributeModifiers::Lazy.new     ], 
-      [:reader,    MooseX::AttributeModifiers::Reader.new   ], 
-      [:writter,   MooseX::AttributeModifiers::Writter.new  ], 
-      [:builder,   MooseX::AttributeModifiers::Builder.new  ], 
-      [:init_arg,  MooseX::AttributeModifiers::Init_arg.new ], 
-      [:trigger,   MooseX::AttributeModifiers::Trigger.new  ], 
-      [:coerce,    MooseX::AttributeModifiers::Coerce.new   ], 
-      [:weak,      MooseX::AttributeModifiers::Weak.new     ], 
-      [:doc,       MooseX::AttributeModifiers::Doc.new      ], 
-      [:override,  MooseX::AttributeModifiers::Override.new ],
+      [:is,        MooseX::AttributeModifiers::Is       ],
+      [:isa,       MooseX::AttributeModifiers::Isa      ],
+      [:default,   MooseX::AttributeModifiers::Default  ],
+      [:required,  MooseX::AttributeModifiers::Required ],
+      [:predicate, MooseX::AttributeModifiers::Predicate],
+      [:clearer,   MooseX::AttributeModifiers::Clearer  ],
+      [:traits,    MooseX::AttributeModifiers::Traits   ],        
+      [:handles,   MooseX::AttributeModifiers::Handles  ], 
+      [:lazy,      MooseX::AttributeModifiers::Lazy     ], 
+      [:reader,    MooseX::AttributeModifiers::Reader   ], 
+      [:writter,   MooseX::AttributeModifiers::Writter  ], 
+      [:builder,   MooseX::AttributeModifiers::Builder  ], 
+      [:init_arg,  MooseX::AttributeModifiers::Init_arg ], 
+      [:trigger,   MooseX::AttributeModifiers::Trigger  ], 
+      [:coerce,    MooseX::AttributeModifiers::Coerce   ], 
+      [:weak,      MooseX::AttributeModifiers::Weak     ], 
+      [:doc,       MooseX::AttributeModifiers::Doc      ], 
+      [:override,  MooseX::AttributeModifiers::Override ],
     ]
 
     def initialize(attr_symbol, options ,klass)
@@ -40,24 +40,24 @@ module MooseX
       @attribute_map = {}
 
       init_internal_modifiers(options.clone, klass.__moosex__meta.plugins, klass)
-
-      generate_all_methods
     end
-    
+
     def init_internal_modifiers(options, plugins, klass)
       @@LIST_OF_PARAMETERS.each do |tuple|
-        parameter, obj = tuple 
-        @attribute_map[parameter] = obj.process(options, @attr_symbol)
+        parameter, k = tuple 
+        @attribute_map[parameter] = k.new(self).process(options, @attr_symbol)
       end
+      
+      generate_all_methods
       
       plugins.sort.uniq.each do |key|
         begin
-          klass = MooseX::AttributeModifiers::ThirdParty.const_get(key.to_s.capitalize.to_sym)          
-          @attribute_map[key.to_sym] = klass.new.process(options, @attr_symbol)
+          k = MooseX::AttributeModifiers::ThirdParty.const_get(key.to_s.capitalize.to_sym)          
+          @attribute_map[key.to_sym] = k.new(self).process(options)
         rescue NameError => e
           next
         rescue => e
-          raise "Unexpected Error in #{key} #{@attr_symbol}: #{e}"  
+          raise "Unexpected Error in #{klass} #{key} #{@attr_symbol}: #{e}"  
         end  
       end
 
@@ -77,15 +77,15 @@ module MooseX
 
       inst_variable_name = "@#{@attr_symbol}".to_sym
       if @attribute_map[:predicate]
-        @methods[@attribute_map[:predicate]] = Proc.new do
-          instance_variable_defined? inst_variable_name
+        @methods[@attribute_map[:predicate]] = ->(this) do
+          this.instance_variable_defined? inst_variable_name
         end
       end
 
       if @attribute_map[:clearer]
-        @methods[@attribute_map[:clearer]] = Proc.new do
-          if instance_variable_defined? inst_variable_name
-            remove_instance_variable inst_variable_name
+        @methods[@attribute_map[:clearer]] = ->(this) do
+          if this.instance_variable_defined? inst_variable_name
+            this.remove_instance_variable inst_variable_name
           end
         end
       end
@@ -103,15 +103,15 @@ module MooseX
 
           @methods[method] = generate_handles_with_currying(delegator, original_method, currying)         
         else  
-          @methods[method] = Proc.new do |*args, &proc|
-            delegator.call(self).__send__(target_method, *args, &proc)
+          @methods[method] = Proc.new do |this, *args, &proc|
+            delegator.call(this).__send__(target_method, *args, &proc)
           end
         end 
       end  
     end    
 
     def generate_handles_with_currying(delegator, original_method, currying)
-      Proc.new do |*args, &proc|
+      Proc.new do |this, *args, &proc|
 
         a1 = [ currying ]
 
@@ -121,7 +121,7 @@ module MooseX
           a1 = currying.map{|c| (c.is_a?(Proc)) ? c[] : c }
         end
 
-        delegator.call(self).__send__(original_method, *a1, *args, &proc)
+        delegator.call(this).__send__(original_method, *a1, *args, &proc)
       end
     end   
     
@@ -179,9 +179,9 @@ module MooseX
         end
       end
 
-      -> do 
-        before_get.call(self)
-        instance_variable_get inst_variable_name 
+      ->(this) do 
+        before_get.call(this)
+        this.instance_variable_get inst_variable_name 
       end
     end
 
@@ -202,13 +202,13 @@ module MooseX
       type_check         = protect_isa(@attribute_map[:isa], "isa check for #{writter_name}")
       trigger            = @attribute_map[:trigger]
       traits             = @attribute_map[:traits]
-      Proc.new  do |value| 
+      ->(this, value) do 
         value = coerce.call(value)
         type_check.call( value )
-        trigger.call(self,value)
+        trigger.call(this,value)
         value = traits.call(value)
-        instance_variable_set inst_variable_name, value
+        this.instance_variable_set inst_variable_name, value
       end
-    end 
+    end     
   end
 end
