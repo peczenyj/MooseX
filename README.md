@@ -495,7 +495,7 @@ Optional.
 
 If you need override one attribute, you should use `override: true`, or MooseX will raise one exception. 
 
-### traits => Trait|[Array of Traits]
+### traits => Trait | [Array of Traits]
 
 The objective of use traits is extends the original attribute, using delegators (think in Monads). We support few traits at this moment and, **Important**, if you set a list of Traits we will apply each trait in sequence. Have a Suggestion? Open an Issue on Github!
 
@@ -561,7 +561,7 @@ We store surname and name as a tuple of Strings. Instead access `array_with_surn
 
 #### Trait Expires
 
-This trait will wrap the original value and set one expiration time (in seconds). Accepts one tuple (array) of [ value, expiration ].
+This trait will wrap the original value and set one expiration time (in seconds, -1 to never expires). Accepts one tuple (array) of [ value, expiration ].
 
 ```ruby
 requires 'moosex'
@@ -681,6 +681,28 @@ Instead force a coerce to a tuple, here we use a `expires` keyword. You need ena
 ### Build your own Plugin
 
 You should create one Class who accepts one parameter in the constructor (it is a reference for the MooseX::Attribute class) and one method 'process' who will be invoked against the argument hash ( in the constructor ). The reference for the attribute can be used to change the original behavoir and you must delete the used arguments from the hash (in process). See the file `lib/moosex/plugins.rb` for more examples.
+
+```ruby
+module MooseX
+  module Plugins
+    class Chained
+      def initialize(this)
+        @this = this
+      end
+      def process(options)
+       chained = !! options.delete(:chained)
+
+       if chained
+         writter  = @this.attribute_map[:writter]
+         old_proc = @this.methods[ writter ]
+         @this.methods[writter] = ->(this, value) { old_proc.call(this, value); this }   
+       end
+
+      @this.attribute_map[:chained] = chained
+      end
+    end
+    ...
+```
 
 **Important** the public API for MooseX::Attribute is under development and can change in any moment. This will be true until the first stable release.
 
