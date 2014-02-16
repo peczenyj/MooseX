@@ -292,10 +292,9 @@ module MooseX
       def coerce(traits,f)
         original = ->(value) { value }
 
-        [ traits ].flatten.inject(original) do |inner, trait|
+        [traits].flatten.inject(original) do |inner, trait|
           ->(value) { trait.new inner.call value  }
         end
-        
       end
       def validate(traits,f)
         # TODO

@@ -1,3 +1,6 @@
+  - add plugins Chained and ExpiredAttribute #76
+  - remove experimental traits, add Expire  
+
 0.0.19 - 2014-02-14
   - improvements in examples and internals
   - add basic suport to traits #24

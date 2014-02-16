@@ -15,6 +15,7 @@ require "moosex/traits"
 require "weakref"
 
 module MooseX
+  @@PLUGINS         = []
   @@ALIAS           = nil
   @@MOOSEX_WARNINGS = true
   @@MOOSEX_FATAL    = false
@@ -40,6 +41,10 @@ module MooseX
       @@ALIAS = (args[:meta].is_a?(TrueClass))? :meta : args[:meta]
     end
     
+    if args.has_key?(:with_plugins) 
+      @@PLUGINS = [ args[:with_plugins] ].flatten
+    end
+    
     self
   end
 
@@ -62,6 +67,11 @@ module MooseX
     unless class_or_module.respond_to? :__moosex__meta
       meta = MooseX::Meta.new
 
+      @@PLUGINS.each do |plugin|
+        meta.add_plugin(plugin)
+      end
+      @@PLUGINS = []
+      
       class_or_module.define_singleton_method(:__moosex__meta) { meta } 
 
       if @@ALIAS

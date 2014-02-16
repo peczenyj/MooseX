@@ -117,7 +117,7 @@ module MooseX
     end
 
     def add_plugin(plugin)
-      @plugins << plugin.to_sym
+      @plugins << plugin
     end
 
     private

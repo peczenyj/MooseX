@@ -1,41 +1,32 @@
 require 'moosex'
-require 'moosex/attribute'
-require 'moosex/attribute/modifiers'
+require 'moosex/traits'
+require 'moosex/plugins'
 
-module MooseX
-  module AttributeModifiers
-    module ThirdParty
-      class Chained
-        def initialize(this)
-          @this = this
-        end
-        def process(options)
-         
-         chained = !! options.delete(:chained)
-         
-         if chained
-           writter  = @this.attribute_map[:writter]
-           old_proc = @this.methods[ writter ]
-           @this.methods[writter] = ->(this, value) { old_proc.call(this, value); this }   
-         end
-         
-         chained
-        end
-     end
-    end
-  end  
-end
-
-module MyPlugin
-  def self.included(x)
-    x.__moosex__meta.add_plugin(:chained)
+module TestAddAttribute  
+  class EmailMessage
+    include MooseX.init(
+        with_plugins: MooseX::Plugins::Chained
+      )
+    has :_from, writter: :from, chained: true
+    has :_to, writter: :to, chained: true
+    has :_subject, writter: :withSubject, chained: true
+    has :_body , writter: :withBody, chained: true
+    
+    def send 
+      { 
+        from: self._from, 
+        to:   self._to,
+        subject: self._subject,
+        body: self._body,
+      }
+    end      
   end
-end
-
-module TestAddAttribute
+  
   class A
-    include MooseX.init(meta: true)
-    include MyPlugin
+    include MooseX.init(
+        meta: true, 
+        with_plugins: MooseX::Plugins::Chained
+      )
 
     has :foo, {
       writter: :set_foo,
@@ -61,7 +52,7 @@ module TestAddAttribute
     
     has :foo, {
       writter: :set_foo,
-      chained: true
+      chained: true, # will warn only!
     }
   end    
 end
@@ -127,3 +118,59 @@ describe TestAddAttribute do
     a.foo.should == 2
   end         
 end
+
+describe "TestAddAttribute::EmailMessage" do
+
+  it "should return a hash with options" do
+    TestAddAttribute::EmailMessage.new.
+      from("foo@bar.com").
+      to("me@baz.com").
+      withSubject("test").
+      withBody("hi!").
+      send.should == {
+        from: "foo@bar.com",
+        to: "me@baz.com",
+        subject: "test",
+        body: "hi!"
+      }
+  end
+end
+
+module TestAddAttribute 
+  class MyClass
+    include MooseX.init(meta: true, with_plugins: MooseX::Plugins::ExpiredAttribute)
+    
+    has :log
+    
+    has config: {
+      is: :lazy,
+      clearer: true,
+      predicate: true,
+      expires: 4,      # seconds
+    }
+    
+    has :session, default: ->{ {} }, expires: -1
+    
+    def build_config
+      log.info(:created)
+      { foo: 1 }
+    end
+  end
+end
+
+describe TestAddAttribute::MyClass do
+  it "should reload config, but not session" do
+    log = double
+    log.should_receive(:info).with(:created).twice
+    
+    c = TestAddAttribute::MyClass.new(log: log)
+
+    c.config.should == { foo: 1}
+    c.session.valid?.should be_true
+    
+    sleep(4)
+    
+    c.config.should == { foo: 1}
+    c.session.valid?.should be_true
+  end
+end  

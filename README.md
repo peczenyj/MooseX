@@ -559,30 +559,37 @@ Sometimes we need store an array of fixed size and each element has an identity.
 
 We store surname and name as a tuple of Strings. Instead access `array_with_surname_name[0]` or `array_with_surname_name[1]`, we can apply the Trait `Pair`, and access (or save!) each component of this pair, but you can't change the pair itself. Look the example of currying in `surname_and_name`, calling join with "," as an argument.
 
-#### Trait RescueToNil
+#### Trait Expires
 
-The objective of `MooseX::Traits::RescueToNil` is avoid `NoMethodError` if, for example, you set nil as value. For example:
+This trait will wrap the original value and set one expiration time (in seconds). Accepts one tuple (array) of [ value, expiration ].
 
 ```ruby
-  has important: {
+requires 'moosex'
+requires 'moosex/traits'
+
+class MyHomePage
+  include MooseX
+  has session: {
     is: :rw,
-    default: 0,
-    traits: MooseX::Traits::RescueToNil,
-    handles: {
-      plus: :+,
-      minus: :-,
-    }
+    default: -> { {} },
+    coerce: ->(value) { ((value.is_a?(Array))? value : [value, 3]) },
+    traits: MooseX::Traits::Expires,
   }
-```    
-Imagine you can accept nil as a valid value. In this case, you can't use `+` or `-`, right? It will raise a NoMethodError. Well... you can avoid this with RescueToNil trait. Using this, we will return  `nil` for each operation in case of NoMethodError, and raise other kinds of exceptions.
+end
 
-#### Trait RescueToZero
+page = MyHomePage.new
+page.session.valid?                # => true
+page.session                       # =>  {}
+sleep(3)
+page.session.valid?                # => false
+page.session= { bar: 5 }           # will be coerce to [ {bar: 5}, 3 ]
+page.session.valid?                # => true
+page.session                       # => { bar: 5 }
+sleep(3) 
+page.session.valid?                # => false
+```
 
-Similar to RescueToNil, but return 0 in case of `NoMethodError`.
-
-#### Trait RescueToEmptyString
-
-Similar to RescueToNil, but return empty string "" in case of `NoMethodError`. 
+See plugin "ExpiredAttribute" for a more clean interface (without this ugly coerce)!
 
 ##### Create your own trait
 
@@ -608,47 +615,86 @@ module MooseX
 ```
 You can create or extend your own Traits too. It is easy.
 
-##### Composable Traits
+#### Traits Removed
 
-It is easy compose traits, for example:
+**IMPORTANT** RescueToNil, RescueToZero and RescueToEmptyString traits are removed since 0.0.20 version
+
+## Plugins
+
+You can extend MooseX using Plugins, and you can create your own plugins. The only kind of plugin supported is `attribute plugin`, but we can accept other kinds of plugins in the future. To enable one ( or more ) plugins you should specify the list of plugins in the init method when you include the MooseX module.
+
+### Plugin Chained
+
+The original behavior of the writter method is return the attribute value. If you want return `self` to continue calling other methods - to create one fluent interface, for example - you can use the plugin `MooseX::Plugins::Chained` and avoid writters with = in the end. For example:
 
 ```ruby
-class ComplexExample
-  include MooseX
-  include MooseX::Types
+require 'moosex'
+require 'moosex/plugins'
 
-  has surname_name: {
-    is: :rw,
-    isa: isMaybe(isTuple(String, String)),
-    default: nil,
-    traits: [ MooseX::Traits::RescueToEmptyString, MooseX::Traits::Pair ],
-    handles: {
-      surname: :first,
-      name: :second,
-      :surname= => :first=,
-      :name= => :second=,
-      surname_and_name: { join: ->{", "} }
-    }
+class EmailMessage
+  include MooseX.init(
+      with_plugins: MooseX::Plugins::Chained
+    )
+  has :_from, writter: :from, chained: true
+  has :_to, writter: :to, chained: true
+  has :_subject, writter: :withSubject, chained: true
+  has :_body , writter: :withBody, chained: true
+  
+  def send! 
+    # add logic
+  end      
+end
+
+EmailMessage.new.
+  from("foo@bar.com").
+  to("me@baz.com").
+  withSubject("test").
+  withBody("hi!").
+  send!
+```
+
+### Plugin ExpiredAttribute
+
+It is a easy way to apply the trait Expired in lazy attributes!
+
+```ruby
+require 'moosex'
+require 'moosex/plugins'
+
+class MyClass
+  include MooseX.init(with_plugins: MooseX::Plugins::ExpiredAttribute)
+  
+  has config: {
+    is: :lazy,
+    clearer: true,   # mandatory
+    expires: 60,     # seconds
   }
+  
+  def build_config
+    # read configuration...
+  end
+ end
 ```
-First, we apply `RescueToEmptyString`, then `Pair`. In this case, if you set `nil`, name and surname will act as empty string values. For example:
+
+Instead force a coerce to a tuple, here we use a `expires` keyword. You need enable the clearer to read the configuration, in this case.
+
+### Build your own Plugin
+
+You should create one Class who accepts one parameter in the constructor (it is a reference for the MooseX::Attribute class) and one method 'process' who will be invoked against the argument hash ( in the constructor ). The reference for the attribute can be used to change the original behavoir and you must delete the used arguments from the hash (in process). See the file `lib/moosex/plugins.rb` for more examples.
+
+**Important** the public API for MooseX::Attribute is under development and can change in any moment. This will be true until the first stable release.
+
+### Enable more than one plugin
+
+You can pass the list of plugins as an array.
 
 ```ruby
-ce = ComplexExample.new(surname_name: nil)
-ce.name                     # => ""
-ce.surname_and_name         # => ", "
+require 'moosex'
+require 'moosex/plugins'
 
-ce.name= "Isaac"
-ce.surname_and_name         # => ", Isaac"
-ce.surname= "Asimov"
-ce.surname_and_name         # => "Asimov, Isaac"
-
-ce.surname_name= nil
-ce.name                     # => ""    
-ce.surname_and_name         # => ", "
+class MyClass
+  include MooseX.init(with_plugins: [ MooseX::Plugins::ExpiredAttribute, MooseX::Plugins::Chained ])
 ```
-
-In this example it is safe set nil to `surname_name`. when we try to create the Pair, the [0] and [1] calls will return "", and we have one pair ["", ""]. This is why we add RescueToEmptyString first. If we use Pair as first trait, Pair expects an array, not a nil. *The Order is Important*.
 
 ## Hooks: after/before/around
 

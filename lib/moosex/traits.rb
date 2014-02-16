@@ -2,6 +2,21 @@ require 'delegate'
 
 module MooseX
   module Traits
+    class Expires < SimpleDelegator
+      def initialize(args)
+        value, expires   = args[0], args[1]
+        @value   = value
+        @expires = ((expires >= 0)? Time.now + expires : nil)
+        
+        __setobj__(@value)
+      end
+      
+      def valid?
+        return true if @expires.nil?
+        @expires > Time.now
+      end
+    end
+    
     class Counter < SimpleDelegator
       def initialize(value)
         @value = value
@@ -73,43 +88,6 @@ module MooseX
       def value
         ! self.not
       end      
-    end  
-
-    class RescueToNil < SimpleDelegator
-
-      def initialize(value)
-        @value = value
-        @default_value = -> { nil }
-        __setobj__(@value)
-      end
-
-      def method_missing(m, *args, &block)
-        begin
-          super(m, *args, &block)
-        rescue NoMethodError
-          @default_value[]
-        rescue Exception
-          raise
-        end  
-      end
     end
-
-    class RescueToZero < RescueToNil
-
-      def initialize(value)
-        super(value)
-        @default_value = ->{ 0 }
-      end
-
-    end 
-
-    class RescueToEmptyString < RescueToNil
-
-      def initialize(value)
-        super(value)
-        @default_value = -> { "" }
-      end
-
-    end        
-  end
+  end  
 end

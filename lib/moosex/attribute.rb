@@ -50,10 +50,9 @@ module MooseX
       
       generate_all_methods
       
-      plugins.sort.uniq.each do |key|
-        begin
-          k = MooseX::AttributeModifiers::ThirdParty.const_get(key.to_s.capitalize.to_sym)          
-          @attribute_map[key.to_sym] = k.new(self).process(options)
+      plugins.sort.uniq.each do |plugin_klass|
+        begin         
+          plugin_klass.new(self).process(options)
         rescue NameError => e
           next
         rescue => e
@@ -153,8 +152,7 @@ module MooseX
       inst_variable_name = "@#{@attr_symbol}".to_sym
       object.instance_variable_set inst_variable_name, value
     end
-
-    private
+    
     def generate_reader
       inst_variable_name = "@#{@attr_symbol}".to_sym
       
@@ -168,7 +166,7 @@ module MooseX
         traits     = @attribute_map[:traits]
         before_get = ->(object) do
           return if object.instance_variable_defined? inst_variable_name
-
+        
           value = builder.call(object)
           value = coerce.call(value)
           type_check.call( value )
