@@ -703,6 +703,7 @@ You should create one Class who accepts one parameter in the constructor (it is 
 module MooseX
   module Plugins
     class Chained
+      def prepare(options); end
       def initialize(this)
         @this = this
       end
