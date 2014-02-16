@@ -43,6 +43,16 @@ module MooseX
     end
 
     def init_internal_modifiers(options, plugins, klass)
+      plugins.sort.uniq.each do |plugin_klass|
+        begin         
+          plugin_klass.new(self).prepare(options)
+        rescue NameError => e
+          next
+        rescue => e
+          raise "Unexpected Error in #{klass} #{plugin_klass} #{@attr_symbol}: #{e}"  
+        end  
+      end
+
       @@LIST_OF_PARAMETERS.each do |tuple|
         parameter, k = tuple 
         @attribute_map[parameter] = k.new(self).process(options, @attr_symbol)
@@ -56,7 +66,7 @@ module MooseX
         rescue NameError => e
           next
         rescue => e
-          raise "Unexpected Error in #{klass} #{key} #{@attr_symbol}: #{e}"  
+          raise "Unexpected Error in #{klass} #{plugin_klass} #{@attr_symbol}: #{e}"  
         end  
       end
 

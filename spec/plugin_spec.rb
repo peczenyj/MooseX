@@ -144,8 +144,6 @@ module TestAddAttribute
     
     has config: {
       is: :lazy,
-      clearer: true,
-      predicate: true,
       expires: 4,      # seconds
     }
     

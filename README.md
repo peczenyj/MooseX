@@ -589,7 +589,23 @@ sleep(3)
 page.session.valid?                # => false
 ```
 
-See plugin "ExpiredAttribute" for a more clean interface (without this ugly coerce)!
+If you want avoid the ugly coerce, you can specify one expired time using the method 'with'.
+
+```ruby
+requires 'moosex'
+requires 'moosex/traits'
+
+class MyHomePage
+  include MooseX
+  has session: {
+    is: :rw,
+    default: -> { {} },
+    traits: MooseX::Traits::Expires.with(3),
+  }
+end
+```
+
+See plugin "ExpiredAttribute" to see how you can specify one expire time and mix with lazy mechanism to auto build in case of not valid value.
 
 ##### Create your own trait
 
@@ -655,7 +671,7 @@ EmailMessage.new.
 
 ### Plugin ExpiredAttribute
 
-It is a easy way to apply the trait Expired in lazy attributes!
+It is a easy way to apply the trait Expired in lazy attributes, and auto build the attribute if it is not valid!
 
 ```ruby
 require 'moosex'
@@ -666,7 +682,7 @@ class MyClass
   
   has config: {
     is: :lazy,
-    clearer: true,   # mandatory
+    clearer: true,   # optional, if not specify, we will force the default clearer method
     expires: 60,     # seconds
   }
   
@@ -676,11 +692,11 @@ class MyClass
  end
 ```
 
-Instead force a coerce to a tuple, here we use a `expires` keyword. You need enable the clearer to read the configuration, in this case.
+You need enable the clearer to read the configuration, in this case.
 
 ### Build your own Plugin
 
-You should create one Class who accepts one parameter in the constructor (it is a reference for the MooseX::Attribute class) and one method 'process' who will be invoked against the argument hash ( in the constructor ). The reference for the attribute can be used to change the original behavoir and you must delete the used arguments from the hash (in process). See the file `lib/moosex/plugins.rb` for more examples.
+You should create one Class who accepts one parameter in the constructor (it is a reference for the MooseX::Attribute class) and one method 'process' who will be invoked against the argument hash ( in the constructor ), and another method prepare. The reference for the attribute can be used to change the original behavoir and you must delete the used arguments from the hash (in process). See the file `lib/moosex/plugins.rb` for more examples.
 
 ```ruby
 module MooseX

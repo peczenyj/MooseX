@@ -3,6 +3,17 @@ require 'delegate'
 module MooseX
   module Traits
     class Expires < SimpleDelegator
+      def self.with(expires)
+        expires2 = Class.new(MooseX::Traits::Expires)
+        expires2.class_eval do
+          define_method(:initialize) do |value|
+            super([ value, expires ])
+          end
+        end
+          
+        expires2
+      end
+      
       def initialize(args)
         value, expires   = args[0], args[1]
         @value   = value
