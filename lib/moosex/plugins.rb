@@ -27,14 +27,14 @@ module MooseX
       end
       
       def prepare(options)
-        options[:traits] ||= []
         if(options[:expires])
+          options[:traits] ||= []
           options[:traits].unshift( MooseX::Traits::Expires.with(options[:expires]) )
-        end
         
-        unless options[:clearer]
-          options[:clearer] = true
-        end    
+          unless options[:clearer]
+            options[:clearer] = true
+          end
+        end        
       end
       
       def process(options)
