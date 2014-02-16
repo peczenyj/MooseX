@@ -18,6 +18,7 @@ But the objetive of MooseX is different: this is a toolbox to create Classes bas
 - lazy attributes
 - roles / abstract classes / interfaces
 - traits / monads
+- plugins
 - parameterized roles
 - composable type check
 - events
