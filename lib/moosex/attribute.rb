@@ -15,24 +15,24 @@ module MooseX
     def default  ; @attribute_map[:default] ; end
 
     @@LIST_OF_PARAMETERS = [ 
-      [:is,        MooseX::AttributeModifiers::Is       ],
-      [:isa,       MooseX::AttributeModifiers::Isa      ],
-      [:default,   MooseX::AttributeModifiers::Default  ],
-      [:required,  MooseX::AttributeModifiers::Required ],
-      [:predicate, MooseX::AttributeModifiers::Predicate],
-      [:clearer,   MooseX::AttributeModifiers::Clearer  ],
-      [:traits,    MooseX::AttributeModifiers::Traits   ],        
-      [:handles,   MooseX::AttributeModifiers::Handles  ], 
-      [:lazy,      MooseX::AttributeModifiers::Lazy     ], 
-      [:reader,    MooseX::AttributeModifiers::Reader   ], 
-      [:writter,   MooseX::AttributeModifiers::Writter  ], 
-      [:builder,   MooseX::AttributeModifiers::Builder  ], 
-      [:init_arg,  MooseX::AttributeModifiers::Init_arg ], 
-      [:trigger,   MooseX::AttributeModifiers::Trigger  ], 
-      [:coerce,    MooseX::AttributeModifiers::Coerce   ], 
-      [:weak,      MooseX::AttributeModifiers::Weak     ], 
-      [:doc,       MooseX::AttributeModifiers::Doc      ], 
-      [:override,  MooseX::AttributeModifiers::Override ],
+      :is,        #MooseX::AttributeModifiers::Is       ],
+      :isa,       #MooseX::AttributeModifiers::Isa      ],
+      :default,   #MooseX::AttributeModifiers::Default  ],
+      :required,  #MooseX::AttributeModifiers::Required ],
+      :predicate, #MooseX::AttributeModifiers::Predicate],
+      :clearer,   #MooseX::AttributeModifiers::Clearer  ],
+      :traits,    #MooseX::AttributeModifiers::Traits   ],        
+      :handles,   #MooseX::AttributeModifiers::Handles  ], 
+      :lazy,      #MooseX::AttributeModifiers::Lazy     ], 
+      :reader,    #MooseX::AttributeModifiers::Reader   ], 
+      :writter,   #MooseX::AttributeModifiers::Writter  ], 
+      :builder,   #MooseX::AttributeModifiers::Builder  ], 
+      :init_arg,  #MooseX::AttributeModifiers::Init_arg ], 
+      :trigger,   #MooseX::AttributeModifiers::Trigger  ], 
+      :coerce,    #MooseX::AttributeModifiers::Coerce   ], 
+      :weak,      #MooseX::AttributeModifiers::Weak     ], 
+      :doc,       #MooseX::AttributeModifiers::Doc      ], 
+      :override,  #MooseX::AttributeModifiers::Override ],
     ]
 
     def initialize(attr_symbol, options ,klass)
@@ -43,19 +43,24 @@ module MooseX
     end
 
     def init_internal_modifiers(options, plugins, klass)
+      list = @@LIST_OF_PARAMETERS.map do |parameter|
+        MooseX::AttributeModifiers::const_get(parameter.capitalize).new(self)
+      end
+      
+      list.each do |plugin|
+        plugin.prepare(options)
+      end
+        
       plugins.sort.uniq.each do |plugin_klass|
         begin         
           plugin_klass.new(self).prepare(options)
-        rescue NameError => e
-          next
         rescue => e
           raise "Unexpected Error in #{klass} #{plugin_klass} #{@attr_symbol}: #{e}"  
         end  
       end
-
-      @@LIST_OF_PARAMETERS.each do |tuple|
-        parameter, k = tuple 
-        @attribute_map[parameter] = k.new(self).process(options, @attr_symbol)
+      
+      list.each do |plugin|
+        plugin.process(options)
       end
       
       generate_all_methods

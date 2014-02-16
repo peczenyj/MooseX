@@ -3,27 +3,33 @@ module MooseX
     module ThirdParty
     end
     module AttrBaseModifier
-      def initialize(attrs)
-        @attrs=attrs
+      def initialize(attr)
+        @attr=attr
+        @attr_symbol = attr.attr_symbol
       end
-      def process(options, attr_symbol)
-        @attr_symbol = attr_symbol
-
+      
+      def prepare(options) 
+        # TODO! move logic to here
+      end
+      
+      def process(options)
         local_options = { 
           name => default 
         }.merge(options)
         
+        unless local_options.has_key?(name)
+          @attr.attribute_map[name]=nil 
+          return
+        end
         options.delete(name)
 
-        return nil unless local_options.has_key?(name)
-
-        attr = local_options[name]      
-        attr = coerce(attr,attr_symbol)
-        validate(attr, attr_symbol)
+        attr = local_options[name]
+        attr = coerce(attr, @attr_symbol)
+        validate(attr, @attr_symbol)
 
         attr = update_options(options, name, attr)
 
-        attr
+        @attr.attribute_map[name] = attr
       end
 
       def name; self.class.name.downcase.split("::").last.to_sym ; end
